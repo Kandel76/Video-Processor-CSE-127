@@ -103,6 +103,8 @@ bool pre_v_sync = 0;
 
 // set Verilog module inputs based on arrow key inputs
 void apply_input() {
+    printf("input U  D  L  R\n      %i, %i, %i, %i\n", keys[0], keys[1], keys[2], keys[3]);
+
     display->up = keys[0];
     display->down = keys[1];
     display->left = keys[2];
@@ -122,7 +124,7 @@ void discard_input() {
 
 // read VGA outputs and update graphics buffer
 void sample_pixel() {
-    //discard_input();
+    discard_input();
     
     coord_x = (coord_x + 1) % TOTAL_WIDTH;
 
