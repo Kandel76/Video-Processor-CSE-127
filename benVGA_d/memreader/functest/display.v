@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 
 `include "../mem2vga.v"
+`include "../sync_manager.v"
 
 module display(
     input wire clk, reset,

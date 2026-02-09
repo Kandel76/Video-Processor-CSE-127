@@ -6,94 +6,30 @@ module mem2vga
     output [7:0] pixel_o //8 bit pixel brightness value
     );
 
-    reg h_sync, v_sync;
-    reg [9:0] coord_x, coord_y;
-    reg active_area;
+    //wires
+    wire active_area; //indicates whether currently in active area
 
     logic [7:0] pixel_l;
-
-    assign hsync_o = h_sync;
-    assign vsync_o = v_sync;
     assign pixel_o = pixel_l;
 
-    always @(*) begin
-        if (active_area) begin
-            pixel_l = coord_x[7:0];
-        end else begin
-            pixel_l = 0;
-        end
-    end
-        
-    // NOT MY CODE ==================================================
-    // code source: https://github.com/SamanMohseni/VGA-Simulation
-    // copy license: https://github.com/SamanMohseni/VGA-Simulation/blob/main/LICENSE
-    
-    // 640X480 VGA sync parameters
-    localparam LEFT_PORCH   = 48;
-    localparam ACTIVE_WIDTH = 640;
-    localparam RIGHT_PORCH  = 16;
-    localparam HORIZONTAL_SYNC = 96;
-    localparam TOTAL_WIDTH  = 800;
-    
-    localparam TOP_PORCH    = 33;
-    localparam ACTIVE_HEIGHT= 480;
-    localparam BOTTOM_PORCH = 10;
-    localparam VERTICAL_SYNC= 2;
-    localparam TOTAL_HEIGHT = 525;
+    sync_manager syncer(
+        .clk(clk),
+        .reset(reset),
+        .hsync_o(hsync_o),
+        .vsync_o(vsync_o),
+        .active_area(active_area)
+    );
 
-    // next state regs
-    reg h_sync_next, v_sync_next;
-    reg [9:0] coord_x_next, coord_y_next;
-    reg active_area_next;
-    
-    // sequential logic
-    always @(posedge clk)
-    begin
-        if(reset)
-        begin
-            h_sync <= 0;
-            v_sync <= 0;
-            coord_x <= 0;
-            coord_y <= 0;
-            active_area <= 0;
-        end
-        else
-        begin
-            h_sync <= h_sync_next;
-            v_sync <= v_sync_next;
-            coord_x <= coord_x_next;
-            coord_y <= coord_y_next;
-            active_area <= active_area_next;
+    always @(posedge clk) begin
+        if (reset) begin
+            pixel_l <= 8'h00;
+        end else if (active_area && (pixel_l <= 240)) begin
+            pixel_l <= pixel_l + 1;
+        end else if (active_area) begin
+            pixel_l <= pixel_l;
+        end else begin
+            pixel_l <= 8'h00;
         end
     end
-    
-    // combinational logic
-    always @(*)
-    begin
-        h_sync_next = coord_x >= RIGHT_PORCH + ACTIVE_WIDTH && 
-                      coord_x < RIGHT_PORCH + ACTIVE_WIDTH + HORIZONTAL_SYNC;
-        v_sync_next	= coord_y >= TOP_PORCH + ACTIVE_HEIGHT && 
-                      coord_y < TOP_PORCH + ACTIVE_HEIGHT + VERTICAL_SYNC;
-        
-        
-        if(coord_x == TOTAL_WIDTH - 1)
-        begin
-            coord_x_next = 0;
-            if(coord_y == TOTAL_HEIGHT - 1)
-                coord_y_next = 0;
-            else
-                coord_y_next = coord_y + 1;
-        end
-        else
-        begin
-            coord_x_next = coord_x + 1;
-            coord_y_next = coord_y;
-        end
-            
-            
-        active_area_next = coord_x < ACTIVE_WIDTH && coord_y < ACTIVE_HEIGHT;
-    end
-    
-    // END NOT MY CODE ==============================================
 
 endmodule
