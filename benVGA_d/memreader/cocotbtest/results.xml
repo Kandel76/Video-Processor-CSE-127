@@ -1,6 +1,7 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1770665383" />
-    <testcase name="my_test" classname="test_mem2vga" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/memreader/cocotbtest/test_mem2vga.py" lineno="16" time="0.0007784366607666016" sim_time_ns="160.0" ratio_time="205540.16539050537" />
+    <property name="random_seed" value="1770667519" />
+    <testcase name="reset_test" classname="test_mem2vga" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/memreader/cocotbtest/test_mem2vga.py" lineno="32" time="0.0013108253479003906" sim_time_ns="280.0" ratio_time="213605.8785012732" />
+    <testcase name="en_test" classname="test_mem2vga" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/memreader/cocotbtest/test_mem2vga.py" lineno="53" time="0.0008890628814697266" sim_time_ns="320.0" ratio_time="359929.5467953875" />
   </testsuite>
 </testsuites>

@@ -3,30 +3,29 @@
 import cocotb
 from cocotb.triggers import FallingEdge, Timer
 
-
-async def generate_clock(dut):
+# helpers =================================================
+async def generate_clock(dut, NUMCYCLES=200):
     # generate 25MHz clk
 
-    for _ in range(10):
+    for _ in range(NUMCYCLES):
         dut.clk.value = 0
         await Timer(20, unit="ns")
         dut.clk.value = 1
         await Timer(20, unit="ns")
 
-@cocotb.test()
-async def my_test(dut):
+async def generate_clk_and_reset(dut, NUMCYCLES=200, BEFORE=2, DURING=3):
+    # generate a reset signal
+    # parameters are for total clock cycles, number of cycles before and during reset
+    
+    cocotb.start_soon(generate_clock(dut, NUMCYCLES))
 
-    cocotb.start_soon(generate_clock(dut))  # run the clock "in the background"
+    dut.reset.value = 0
+    for _ in range(BEFORE):
+        await FallingEdge(dut.clk)
+    dut.reset.value = 1
+    for _ in range(DURING):
+        await FallingEdge(dut.clk)
+    dut.reset.value = 0
 
-    await FallingEdge(dut.clk)  # wait for falling edge/"negedge"
-    cocotb.log.info("B is %s", dut.B.value)
-    await FallingEdge(dut.clk)  # wait for falling edge/"negedge"
-    cocotb.log.info("B is %s", dut.B.value)
-    await FallingEdge(dut.clk)  # wait for falling edge/"negedge"
-    cocotb.log.info("B is %s", dut.B.value)
-    await Timer(10, unit="ns")
-    cocotb.log.info("B is now %s", dut.B.value)
-    await FallingEdge(dut.clk)  # wait for falling edge/"negedge"
-    cocotb.log.info("B is %s", dut.B.value)
-    await FallingEdge(dut.clk)  # wait for falling edge/"negedge"
-    cocotb.log.info("B is %s", dut.B.value)
+
+# tests ===================================================
