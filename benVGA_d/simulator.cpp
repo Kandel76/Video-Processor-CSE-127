@@ -109,7 +109,7 @@ void apply_input() {
     display->down = keys[1];
     display->left = keys[2];
     display->right = keys[3];
-    
+
     //for(int i=0; i<4; i++)
     //    keys[i] = 0;
 }
