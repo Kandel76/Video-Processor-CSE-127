@@ -19,6 +19,8 @@ module display(
     always @(posedge clk) begin
         clk_25 <= ~clk_25;
     end
+
+    //buffering inputs
     
     // instantiate vga_controller circuit 
     vga_controller vga_controller_unit(

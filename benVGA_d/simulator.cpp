@@ -110,8 +110,9 @@ void apply_input() {
     display->left = keys[2];
     display->right = keys[3];
 
-    //for(int i=0; i<4; i++)
-    //    keys[i] = 0;
+    for(int i=0; i<4; i++) {
+        keys[i] = 0;
+    }
 }
 
 // we only want the input to last for one or few clocks
