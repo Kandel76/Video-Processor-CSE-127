@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1770665383" />
+    <testcase name="my_test" classname="test_mem2vga" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/memreader/cocotbtest/test_mem2vga.py" lineno="16" time="0.0007784366607666016" sim_time_ns="160.0" ratio_time="205540.16539050537" />
+  </testsuite>
+</testsuites>
