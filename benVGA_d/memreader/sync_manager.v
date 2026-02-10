@@ -3,10 +3,12 @@ module sync_manager (
     input reset,
     output hsync_o,
     output vsync_o,
+    output reg [9:0] coord_x, 
+    output reg [9:0] coord_y,
     output reg active_area
 );
+
     reg h_sync, v_sync;
-    reg [9:0] coord_x, coord_y;
 
     assign hsync_o = h_sync;
     assign vsync_o = v_sync;

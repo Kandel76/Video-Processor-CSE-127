@@ -2,6 +2,7 @@
 
 `include "../mem2vga.v"
 `include "../sync_manager.v"
+`include "../axi_manager.v"
 
 module display(
     input wire clk, reset,
