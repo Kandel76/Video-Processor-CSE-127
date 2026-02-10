@@ -1,4 +1,5 @@
-# test mem2vga module
+# example tests for a basic DFF module
+# Modify these to make the mem2vga tests
 
 import cocotb
 from cocotb.triggers import FallingEdge, Timer

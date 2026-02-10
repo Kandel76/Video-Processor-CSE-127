@@ -6,6 +6,7 @@ module file_reader (
 );
     assign pixel_o = addr_i[17:10];
 
+    /*
     reg[7:0] str;
     integer fd;
     integer chars;
@@ -20,9 +21,9 @@ module file_reader (
             chars = $fgets(str, fd);
 
             // Display contents of the variable
-            $display("%0s", str);
+            //$display("%0s", str);
         end
         $fclose(fd);
-    end
+    end*/
 
 endmodule
