@@ -38,7 +38,7 @@ module axi_manager (
             cache_region_l <= 2'b0;
             cache1_r <= 0;
             cache2_r <= 0;
-        end else begin
+        end else if (active_i) begin
             if (which_cache_l) begin
                 //reading from cache 2, writing cache 1
                 cache1_r <= 32'h01234567; //TEMP assignment for debug
