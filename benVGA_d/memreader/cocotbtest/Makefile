@@ -8,6 +8,8 @@ TOPLEVEL_LANG ?= verilog
 WAVES ?= 1
 
 VERILOG_SOURCES += $(PWD)/../mem2vga.v
+VERILOG_SOURCES += $(PWD)/../axi_manager.v
+VERILOG_SOURCES += $(PWD)/../sync_manager.v
 # use VHDL_SOURCES for VHDL files
 
 # COCOTB_TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file

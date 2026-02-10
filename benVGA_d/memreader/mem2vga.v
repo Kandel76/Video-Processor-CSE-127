@@ -2,6 +2,7 @@ module mem2vga
     (
     input clk, //25 MHz
     input reset,
+    output active_o, //TODO testing purposes only
     output hsync_o, 
     output vsync_o,
     output [7:0] pixel_o //8 bit pixel brightness value
@@ -9,6 +10,7 @@ module mem2vga
 
     //wires
     wire active_area; //indicates whether currently in active area
+    assign active_o = active_area; //TODO debug only
     wire [9:0] xpos, ypos;
 
     sync_manager syncer(
