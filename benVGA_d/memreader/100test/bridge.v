@@ -20,12 +20,14 @@ module bridge (
 
 
     wire [7:0] pixelbus;
-    assign vgaBlue  = pixelbus [3:0];
-    assign vgaGreen = pixelbus [7:4];
-    assign vgaRed = pixelbus[7:4] & pixelbus[3:0];
-    //assign vgaBlue = 4'hf;
-    //assign vgaGreen = 4'hf;
-    //assign vgaRed = 4'hf;
+    //assign vgaBlue  = pixelbus [3:0];
+    //assign vgaGreen = pixelbus [7:4];
+    //assign vgaRed   = pixelbus[7:4] & pixelbus[3:0];
+
+    assign vgaBlue  = {pixelbus[7]|pixelbus[6], pixelbus[5]|pixelbus[4], pixelbus[3]|pixelbus[2], pixelbus[1]|pixelbus[0]};
+    //assign vgablue  = {pixelbus[6], pixelbus[4], pixelbus[2], pixelbus[0]};
+    assign vgaGreen = {pixelbus[7], pixelbus[5], pixelbus[3], pixelbus[1]};
+    assign vgaRed   = {pixelbus[7]&pixelbus[6], pixelbus[5]&pixelbus[4], pixelbus[3]&pixelbus[2], pixelbus[1]&pixelbus[0]};
 
     mem2vga actualUUT (
         .clk(clkin),

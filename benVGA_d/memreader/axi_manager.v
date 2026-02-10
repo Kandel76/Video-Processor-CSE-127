@@ -13,13 +13,12 @@ module axi_manager (
     localparam ADDRESS_WIDTH = $clog2(NUMPIXELS); //19
 
     logic [ADDRESS_WIDTH-1:0] addr_l;
+/*verilator lint_on UNUSED*/
 
     //temp
     localparam SIZE = 32;
     localparam ADDRESSABLE = $clog2(SIZE);
     reg [SIZE-1:0] data_r = 32'h00aaaaff;
-
-/*verilator lint_on UNUSED*/
 
     
     //address simply counts up while in the active region
@@ -36,6 +35,6 @@ module axi_manager (
     //temp stuff
     
     //assign pixel_o = addr_l[8:1];
-    assign pixel_o = addr_l;
+    assign pixel_o = addr_l[17:10];
 
 endmodule
