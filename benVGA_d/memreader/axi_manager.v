@@ -15,7 +15,6 @@ module axi_manager (
     logic [ADDRESS_WIDTH-1:0] addr_l;
 /*verilator lint_on UNUSED*/
 
-    //temp
     localparam SIZE = 32;
     localparam ADDRESSABLE = $clog2(SIZE);
     reg [SIZE-1:0] data_r = 32'h00aaaaff;
@@ -33,8 +32,17 @@ module axi_manager (
     end
 
     //temp stuff
+
+    //file reader module
+    wire [ADDRESS_WIDTH-1:0]addr_w;
+    assign addr_w = addr_l;
+    file_reader fr (
+        .clk(clk),
+        .reset(reset),
+        .addr_i(addr_w),
+        .pixel_o(pixel_o)
+    );
     
-    //assign pixel_o = addr_l[8:1];
-    assign pixel_o = addr_l[17:10];
+    //assign pixel_o = addr_l[17:10];
 
 endmodule
