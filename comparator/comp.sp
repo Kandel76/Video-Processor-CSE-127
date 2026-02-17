@@ -1,11 +1,11 @@
-* comp.sp
+* comp.sp with sky130 lib
 .subckt comp vinp vinm clk q qb vdd vss
 
 * clkb = inv(clk)
 * inv_1: A VGND VNB VPB VPWR Y
 Xinvclk clk vss vss vdd vdd clkb sky130_fd_sc_hd__inv_1
 
-* Top-left cross-coupled NOR3 pair (swapped polarity version you chose)
+* Top-left cross-coupled NOR3 pair
 * nor3_1: A B C VGND VNB VPB VPWR Y
 XnorT vinm clkb n_mid vss vss vdd vdd n_top sky130_fd_sc_hd__nor3_1
 XnorM vinp clkb n_top vss vss vdd vdd n_mid sky130_fd_sc_hd__nor3_1
