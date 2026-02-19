@@ -3,29 +3,35 @@ module scan_controller #(
     parameter int COLS = 320,
     parameter int ADC_BANKS = 4,
     parameter int DATA_BITS = 4, 
-    parameter int ADC_TIMEOUT_CYCLES = 20,
+    parameter int PIXEL_BUS_WIDTH = DATA_BITS * (COLS / ADC_BANKS), //total bits read from ADC each step
+    parameter int ADC_TIMEOUT_CYCLES = 20
 )(
     //inputs
     input logic clk,
     input logic rst_n,   //ACTIVE LOW
     input logic adc_done,   //signals when all ADC conversions for the current step are done
+    input logic integration_done, //signals when pixel integration time is complete
     input logic [(DATA_BITS*ADC_BANKS)-1:0] adc_data,  //data from the ADC 
     input logic pixel_ready,  //ready signal from array, pixel data can be used
     input logic frame_start, //FOR ANOTHER MODULE to start a new frame (later used to frame rate control)
     
     //outputs
-    output logic                              frame_end  //signals when the entire fram is complete
-    output logic [ROWS-1:0]           row_enable,    //should this be one hot or indexed for row_en?
+    output logic                              frame_done,  //signals when the entire fram is complete
+    output logic                              line_done, //signal end of a row
+    output logic [ROWS-1:0]                   row_enable,    //should this be one hot or indexed for row_en?
     output logic [$clog2(ADC_BANKS)-1:0]      bank_sel, //which bank to start conversion on
     output logic                              adc_start, //start conversion for the specifc adc
     output logic [DATA_BITS-1:0]              pixel_data, 
     output logic [$clog2(ROWS)-1:0]           pixel_row, //current row being output -- used for mapping to pixel array
     output logic [$clog2(COLS)-1:0]           pixel_col, //current col being output -- used for mapping to pixel array
-    output logic                              pixel_valid  //used later for mapping
-    output logic                              pixel_reset //global reset for pixels at the start of each frame
+    output logic                              pixel_valid,  //used later for mapping
+    output logic                              pixel_reset, //global reset for pixels at the start of each frame
+    output logic                              integrate //signal to start integration time for pixels
 );
     
     localparam int STEPS_PER_ROW = COLS / (ADC_BANKS);  //strides
+    logic timeout; //for when the ADC takes too long
+
 
     // State encoding
     typedef enum logic [3:0] {
@@ -45,159 +51,158 @@ module scan_controller #(
     state_t state_d, state_q; 
     
     //counters
-    logic [$clog2(ROWS)-1:0]     row_cnt;   //row counter
-    logic [$clog2(STEPS_PER_ROW)-1:0] step_cnt;  //step counter for columns
-    logic [$clog2(ADC_TIMEOUT_CYCLES)-1:0] timeout_cnt; //timeout counter for ADC
+    logic [$clog2(ROWS)-1:0]     row_cnt_d, row_cnt_q;   //row counter
+    logic [$clog2(STEPS_PER_ROW)-1:0] step_cnt_d, step_cnt_q;  //step counter for columns
+    logic [$clog2(ADC_TIMEOUT_CYCLES)-1:0] timeout_cnt_d, timeout_cnt_q; //timeout counter for ADC
+    logic [DATA_BITS-1:0] pixel_data_d, pixel_data_q; //register to hold pixel data from ADC
+    logic pixel_valid_d, pixel_valid_q; //register to hold pixel valid signal
 
-
-    
-    // ff for states and counters
-    always_ff @(posedge clk) begin
-        if (!rst_n) begin //ACTIVE LOW RESET
-            state_q <= IDLE;
-            row_cnt <= 0;
-            step_cnt <= 0;
-            timeout_cnt <= 0;
-
-        end else begin
-            state_q <= state_d;
-            
-            case (state_q)
-                //reset counters at the start of a new frame or when idle
-                IDLE: begin
-                    row_cnt <= 0;
-                    step_cnt <= 0;
-                    timeout_cnt <= 0;
-                end
-                NEXT_ROW: begin
-                    //if there is more rows to process +1
-                    if (row_cnt < ROWS-1) begin
-                        row_cnt <= row_cnt + 1;
-                        //start from the first step
-                        step_cnt <= 0;
-                    end else begin
-                        row_cnt <= 0;
-                        step_cnt <= 0;
-                    end
-                end
-                //go to next step of col
-                OUTPUT_PIXELS: begin
-                    step_cnt <= step_cnt + 1;
-                end
-            endcase
-        end
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        state_q       <= IDLE;
+        row_cnt_q     <= 0;
+        step_cnt_q    <= 0;
+        timeout_cnt_q <= 0;
+        pixel_data_q  <= 0;
+        pixel_valid_q <= 0;
+    end else begin
+        state_q       <= state_d;
+        row_cnt_q     <= row_cnt_d;
+        step_cnt_q    <= step_cnt_d;
+        timeout_cnt_q <= timeout_cnt_d;
+        pixel_data_q  <= pixel_data_d;
+        pixel_valid_q <= pixel_valid_d;
     end
-    
+end
 
 // driving d_ff
     always_comb begin
+        // Default next values
+        state_d       = state_q;
+        row_cnt_d     = row_cnt_q;
+        step_cnt_d    = step_cnt_q;
+        timeout_cnt_d = timeout_cnt_q;
+        pixel_data_d  = pixel_data_q;
         // Default outputs
-        state_d = state_q; //hold state by default
-        frame_done = 0;
-        row_enable = 0;
-        pixel_col = 0;
-        adc_start = 0;
+        integrate = 0;
+        frame_done  = 0;
+        row_enable  = '0;
+        adc_start   = 0;
         pixel_valid = 0;
-        pixel_row = row_cnt;
-        pixel_data = 0;
         pixel_reset = 0;
-        
+        pixel_row   = row_cnt_q;
+        pixel_col   = step_cnt_q * ADC_BANKS;
+        line_done    = 0;
+        pixel_valid_d = pixel_valid_q
         case (state_q)
             IDLE: begin
 
                 //wait for a flag to start the next frame
                 if (frame_start) begin
                     state_d = RESET_PIXELS; 
+                    row_cnt_d = 0;
+                    step_cnt_d = 0;
+                    timeout_cnt_d = 0;
                 end
 
             end
             
             RESET_PIXELS: begin
 
-                // global reset of pixels
+                // global reset of pixels, thats it
                 pixel_reset = 1;
                 state_d = INTEGRATE;
-
             end
             
             INTEGRATE: begin
+                //this activats integrate signal and waits for the integration done signal to proceed
 
+                integrate = 1; //start integration time for pixels
+                timeout_cnt_d = timeout_cnt_q + 1; //increment timeout counter for integration time
 
-                //wait a specifc # cycles to integrate pixels
-
-
-                 
-                state_d = SELECT_ROW;
+                if(integration_done || timeout) begin
+                    state_d = SELECT_ROW;
+                    timeout_cnt_d = 0; //reset timeout counter for ADC conversion
+                end
             end
             
             SELECT_ROW: begin
 
-                row_enable[row_cnt] = 1; //enable current row
+                row_enable[row_cnt_q] = 1; //enable current row
                 state_d = START_CONVERT;
 
             end
             
             START_CONVERT: begin
 
-                row_enable[row_cnt] = 1; //keep row enabled
-                pixel_col = step_cnt * ADC_BANKS; //select starting column for this step
-                adc_start = 1;  // Start all banks
+                row_enable[row_cnt_q] = 1; //keep row enabled
+                pixel_col = step_cnt_q * ADC_BANKS; //select starting column for this step
+                adc_start = 1;  // pulse to signal ADC to start conversion
                 state_d = WAIT_CONVERT;
 
             end
             
             WAIT_CONVERT: begin
-
-                pixel_col = step_cnt * ADC_BANKS; //keep column selected
+                row_enable[row_cnt_q] = 1; //keep row enabled
+                pixel_col = step_cnt_q * ADC_BANKS; //keep column selected
+                timeout_cnt_d = timeout_cnt_q + 1; //increment timeout counter while waiting for ADC
                 
                 if (adc_done || timeout) begin
                     state_d = OUTPUT_PIXELS;
-                end
-
+                    timeout_cnt_d = 0; //reset timeout counter for next step
+                    //if adc is high, capture data, if timeout, pixel data will be 0
+                    if (adc_done) begin
+                        pixel_data_d = adc_data[DATA_BITS-1:0]; //still unclear/////////////////////////////////////////////////////////
+                    end else begin
+                        pixel_data_d = 0; //or some error code
+                    end
+                    end
             end
             
             OUTPUT_PIXELS: begin
-
-                row_enable[row_cnt] = 1;
+                    pixel_valid_d = 1;
                 
-                if (adc_done && pixel_ready) begin
-                    pixel_valid = 1'b1;
-                end else begin
-                    pixel_valid = 1'b0;
+                //this is for the other modules taking in pixel data
+                if (pixel_ready) begin
+                    pixel_valid_d = 0;
+                    state_d = NEXT_ROW; //next state
                 end
-                
-                end
+            end
 
             
             NEXT_ROW: begin
-
-                // line_done = 1;
-                if (row_cnt == ROWS-1) begin
-                    state_d = FRAME_DONE;
+                //if we've come to the max steps for the row, move to the next row
+                if(row_cnt_q == ROWS-1 && step_cnt_q == STEPS_PER_ROW-1) begin
+                    state_d = FRAME_DONE; //if this is the last row and last step, frame is done
+                end else if (step_cnt_q == STEPS_PER_ROW-1) begin
+                    step_cnt_d = 0; //reset step count for next row
+                    row_cnt_d = row_cnt_q + 1; //move to next row
+                    state_d = SELECT_ROW; //go back to select row for next row
+                    line_done = 1; //signal that the line is done
                 end else begin
-                    state_d = SELECT_ROW;
+                    step_cnt_d = step_cnt_q + 1; //move to next step for same row
+                    state_d = START_CONVERT; //start next conversion for same row
                 end
-
+            
             end
             
             FRAME_DONE: begin
-
                 frame_done = 1;
                 state_d = IDLE;
             end
 
-            DEFAULT: begin
-
+            default: begin
                 state_d = IDLE;
-
             end
 
         endcase
         
     end
 
-//implement timeout logic
-//ff and comb logic
+
+assign timeout = (timeout_cnt_q >= ADC_TIMEOUT_CYCLES);
+assign pixel_data = pixel_data_q;
+assign pixel_valid = pixel_valid_q;
 
 
 endmodule
