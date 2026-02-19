@@ -10,12 +10,11 @@ WAVES ?= 1
 VERILOG_SOURCES += $(PWD)/../mem2vga.v
 VERILOG_SOURCES += $(PWD)/../axi_manager.v
 VERILOG_SOURCES += $(PWD)/../sync_manager.v
-# use VHDL_SOURCES for VHDL files
 
-# COCOTB_TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
+# name of the toplevel module being tested
 COCOTB_TOPLEVEL = mem2vga
 
-# COCOTB_TEST_MODULES is the basename of the Python test file(s)
+# basename of the Python test file
 COCOTB_TEST_MODULES = test_mem2vga
 
 # include cocotb's make rules to take care of the simulator setup
@@ -23,3 +22,4 @@ include $(shell cocotb-config --makefiles)/Makefile.sim
 
 view : sim_build/mem2vga.fst
 	gtkwave sim_build/mem2vga.fst
+

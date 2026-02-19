@@ -41,7 +41,8 @@ module axi_manager (
         end else if (active_i) begin
             if (which_cache_l) begin
                 //reading from cache 2, writing cache 1
-                cache1_r <= 32'h01234567; //TEMP assignment for debug
+                //cache1_r <= 32'h01234567; //TEMP assignment for debug
+                cache1_r <= {4{addr_l[7:0]}}; //TEMP assignment for debug
 
                 //index cache
                 case (cache_region_l)
@@ -52,7 +53,9 @@ module axi_manager (
                 endcase
             end else begin
                 //reading from cache 1, writing cache 2
-                cache2_r <= 32'hffffffff; //TEMP assignment for debug
+                //cache2_r <= 32'hffffffff; //TEMP assignment for debug
+                cache2_r <= {addr_l, 13'h1fff}; //32-19 = 13
+                //$display(addr_l);
 
                 //index cache
                 case (cache_region_l)
