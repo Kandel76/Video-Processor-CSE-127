@@ -50,23 +50,86 @@ async def reset_test(dut):
     await FallingEdge(dut.CLK)
     #always wait til after reset ------
 
+    #       GW  W   A   D
+    #READ   1   X   A   X
+    #WRITE  0   1   A   D
     
+    #write
     await FallingEdge(dut.CLK)
     dut.A.value = 0x01;
-    dut.D.value = 0xA5;
+    dut.D.value = 0x11;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x02;
+    dut.D.value = 0x22;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x04;
+    dut.D.value = 0x33;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x08;
+    dut.D.value = 0x44;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x10;
+    dut.D.value = 0x55;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x20;
+    dut.D.value = 0x66;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x40;
+    dut.D.value = 0x77;
+    dut.WEN.value = 0x00;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x80;
+    dut.D.value = 0x88;
+    dut.WEN.value = 0x00;
+
+    #read
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x80;
+    dut.GWEN.value = 1;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x40;
+    dut.GWEN.value = 1;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x20;
+    dut.GWEN.value = 1;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x10;
+    dut.GWEN.value = 1;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x08;
+    dut.GWEN.value = 1;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x04;
+    dut.GWEN.value = 1;
+
+    await FallingEdge(dut.CLK)
+    dut.A.value = 0x02;
     dut.GWEN.value = 1;
 
     await FallingEdge(dut.CLK)
     dut.A.value = 0x01;
-    dut.D.value = 0xFF;
-    dut.WEN.value = 0xFF;
+    dut.GWEN.value = 1;
 
-    await FallingEdge(dut.CLK)
-    dut.A.value = 0x01;
-    dut.D.value = 0xEE;
-    dut.GWEN.value = 0;
 
+    #let waveform show final values
     await FallingEdge(dut.CLK)
-    print(dut.Q.value)
     await FallingEdge(dut.CLK)
     await FallingEdge(dut.CLK)

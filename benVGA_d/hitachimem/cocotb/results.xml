@@ -1,8 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1771894673" />
-    <testcase name="reset_test" classname="test_hmem" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/hitachimem/cocotb/test_hmem.py" lineno="43" time="0.0012776851654052734" sim_time_ns="220.0" ratio_time="172186.39298376563">
-      <failure error_type="NameError" error_msg="name 'mem_access' is not defined" />
-    </testcase>
+    <property name="random_seed" value="1771953776" />
+    <testcase name="reset_test" classname="test_hmem" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/hitachimem/cocotb/test_hmem.py" lineno="43" time="0.0017654895782470703" sim_time_ns="440.0" ratio_time="249222.65496286293" />
   </testsuite>
 </testsuites>

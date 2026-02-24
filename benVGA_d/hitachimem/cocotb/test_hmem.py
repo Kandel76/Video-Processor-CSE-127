@@ -29,7 +29,7 @@ async def generate_clk_and_reset(dut, NUMCYCLES=200, BEFORE=2, DURING=3):
 
 
 # memory helpers ==========================================
-async def ext_mem_access(dut, DATA=0xe0):
+async def mem_access(dut, DATA=0xe0):
     dut.valid_i.value=0
 
     #simulate access time
@@ -64,10 +64,10 @@ async def reset_test(dut):
     print(dut.valid_o.value)
     print(dut.data_o.value)
     await RisingEdge(dut.valid_o)   #wait for module to say ready
+    await FallingEdge(dut.clk)
     print("----")
     print(dut.valid_o.value)
     print(dut.data_o.value)
-
 
     #extra clock edges at end to see final values
     await FallingEdge(dut.clk)
