@@ -29,7 +29,7 @@ adc_fsm state, state_n;
 logic [3:0] adc_code; 
 
 logic [1:0] bit_idx; 
-//Will need a counter to wait a few cycles
+//Will need a counter to wait a few cycles, unsure if its better to use 2 or 1, for now will assume 2
 logic [2:0] hold, code_hold
 
 always_comb begin
@@ -38,15 +38,24 @@ always_comb begin
 
         IDLE: if (read_en) begin 
             state_n = VIN_HOLD; 
+            else begin 
+                state_n = IDLE;
+            end
         end
         VIN_HOLD: if (cycle_wait[2] && cycle_wait[1]) begin 
             state_n = CODE_SEND; 
+            end
+            else if (reset_signal) begin 
+                state_n = IDLE; 
             end
 
         CODE_SEND: state_n = COMPARE;
 
         COMPARE: if(bit_idx == 0) begin 
             state_n = CODE_STORE;
+        end
+        else if (reset_signal) begin 
+            state_n = IDLE; 
         end
         else begin 
             state_n = CODE_SEND; 
