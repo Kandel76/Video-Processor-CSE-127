@@ -1,9 +1,10 @@
-* tb_comp.sp
+* tb_comp_3v3.sp
 .option compatibility=spectre
 .option nomod
+.option plotwinsize=0
 
 * 1. Parameters and Globals
-.param VDDVAL=5.0
+.param VDDVAL=3.3
 .global vdd vss
 
 * This was added by LLM because I was running into an error about using the "$" and "var_vth" errors.
@@ -27,14 +28,18 @@
 VDD vdd 0 DC {VDDVAL}
 VSS vss 0 DC 0
 
+* 5. Inputs
 * Advanced Stimulus, I have set inverting input to be a threshold of 2.5V
-* V(vinm) stays at 2.5V reference
-VVIM vinm 0 DC 2.5
+* Inverting input reference (threshold)
+VVIM vinm 0 DC 1.65
+
+* To test the threshold at 2.5V, use:
+* VVIM vinm 0 DC 2.5
 
 * V(vinp) tests multiple levels across the 2.5V threshold, this is the "near miss" check
-* Time (ns): 0    10   10.1   20   20.1   30   30.1   40   40.1   50   50.1   60
-* Volt (V): 1.0  1.0   2.4    2.4  2.6    2.6  4.0    4.0  1.5    1.5  3.5    3.5
-VVIP vinp 0 PWL(0 1.0 10n 1.0 10.1n 2.4 20n 2.4 20.1n 2.6 30n 2.6 30.1n 4.0 40n 4.0 40.1n 1.5 50n 1.5 50.1n 3.5 60n 3.5)
+* Time (ns): 0    10   10.1   20   20.1   30   
+* Volt (V): 1.0  1.0   1.55   1.55  1.75  1.75
+VVIP vinp 0 PWL(0 1.0 10n 1.0 10.1n 1.55 20n 1.55 20.1n 1.75 30n 1.75)
 
 * Keep the same 10ns Clock (6 cycles total)
 VCLK clk 0 PULSE(0 {VDDVAL} 1n 50p 50p 5n 10n)
@@ -55,7 +60,8 @@ XU vinp vinm clk q qb vdd vss comp
   
   * message to terminal
   echo "Data exported to tb_results.txt"
-
   quit
+  
 .endc
+
 .end

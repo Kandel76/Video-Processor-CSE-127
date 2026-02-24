@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load data from the 'wrdata' output
-data = np.loadtxt('tb_results.txt')
+data = np.loadtxt('offset.txt')
 
 time = data[:, 0] * 1e9  # Convert to ns
 clk  = data[:, 1]
