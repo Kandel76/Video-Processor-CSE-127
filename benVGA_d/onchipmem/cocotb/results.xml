@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1771908905" />
+    <testcase name="reset_test" classname="test_sram" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/onchipmem/cocotb/test_sram.py" lineno="17" time="0.0023202896118164062" sim_time_ns="640.0" ratio_time="275827.6366625565" />
+  </testsuite>
+</testsuites>

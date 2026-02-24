@@ -1,4 +1,5 @@
-# blah
+# Testbench for the memory reader
+# Uses helper functions to simulate the external memory
 import cocotb
 from cocotb.triggers import FallingEdge, Timer, RisingEdge
 
@@ -28,7 +29,7 @@ async def generate_clk_and_reset(dut, NUMCYCLES=200, BEFORE=2, DURING=3):
 
 
 # memory helpers ==========================================
-async def mem_access(dut, DATA=0xe0):
+async def ext_mem_access(dut, DATA=0xe0):
     dut.valid_i.value=0
 
     #simulate access time
@@ -37,11 +38,6 @@ async def mem_access(dut, DATA=0xe0):
     #give data
     dut.data_i.value = DATA
     dut.valid_i.value = 1
-
-    #wait for outputs to update
-    await RisingEdge(dut.valid_o)
-    return
-
 
 # tests ===================================================
 @cocotb.test()
@@ -67,7 +63,7 @@ async def reset_test(dut):
 
     print(dut.valid_o.value)
     print(dut.data_o.value)
-    await FallingEdge(dut.clk)
+    await RisingEdge(dut.valid_o)   #wait for module to say ready
     print("----")
     print(dut.valid_o.value)
     print(dut.data_o.value)
