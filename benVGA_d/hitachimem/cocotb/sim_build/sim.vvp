@@ -1,0 +1,78 @@
+#! /usr/bin/vvp
+:ivl_version "11.0 (stable)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision - 12;
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/system.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/vhdl_sys.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/vhdl_textio.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/v2005_math.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/va_math.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/v2009.vpi";
+S_0x59e5e8933d90 .scope package, "$unit" "$unit" 2 1;
+ .timescale -9 -12;
+S_0x59e5e8933f40 .scope module, "hmem_access" "hmem_access" 3 1;
+ .timescale -9 -12;
+    .port_info 0 /INPUT 1 "clk";
+    .port_info 1 /INPUT 1 "reset";
+    .port_info 2 /INPUT 1 "ready_i";
+    .port_info 3 /OUTPUT 1 "valid_o";
+    .port_info 4 /OUTPUT 8 "data_o";
+    .port_info 5 /OUTPUT 1 "ready_o";
+    .port_info 6 /INPUT 1 "valid_i";
+    .port_info 7 /INPUT 8 "data_i";
+o0x7b50a6b9f018 .functor BUFZ 1, C4<z>; HiZ drive
+v0x59e5e8945800_0 .net "clk", 0 0, o0x7b50a6b9f018;  0 drivers
+o0x7b50a6b9f048 .functor BUFZ 8, C4<zzzzzzzz>; HiZ drive
+v0x59e5e8945bf0_0 .net "data_i", 7 0, o0x7b50a6b9f048;  0 drivers
+v0x59e5e89802a0_0 .var "data_o", 7 0;
+o0x7b50a6b9f0a8 .functor BUFZ 1, C4<z>; HiZ drive
+v0x59e5e8980360_0 .net "ready_i", 0 0, o0x7b50a6b9f0a8;  0 drivers
+v0x59e5e8980440_0 .var "ready_o", 0 0;
+o0x7b50a6b9f108 .functor BUFZ 1, C4<z>; HiZ drive
+v0x59e5e8980570_0 .net "reset", 0 0, o0x7b50a6b9f108;  0 drivers
+o0x7b50a6b9f138 .functor BUFZ 1, C4<z>; HiZ drive
+v0x59e5e8980650_0 .net "valid_i", 0 0, o0x7b50a6b9f138;  0 drivers
+v0x59e5e8980730_0 .var "valid_o", 0 0;
+E_0x59e5e89347e0 .event posedge, v0x59e5e8945800_0;
+S_0x59e5e89703d0 .scope module, "cocotb_iverilog_dump" "cocotb_iverilog_dump" 4 1;
+ .timescale -9 -12;
+    .scope S_0x59e5e8933f40;
+T_0 ;
+    %wait E_0x59e5e89347e0;
+    %load/vec4 v0x59e5e8980570_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_0.0, 8;
+    %pushi/vec4 0, 0, 1;
+    %assign/vec4 v0x59e5e8980440_0, 0;
+    %pushi/vec4 0, 0, 1;
+    %assign/vec4 v0x59e5e8980730_0, 0;
+    %pushi/vec4 0, 0, 8;
+    %assign/vec4 v0x59e5e89802a0_0, 0;
+    %jmp T_0.1;
+T_0.0 ;
+    %load/vec4 v0x59e5e8980360_0;
+    %assign/vec4 v0x59e5e8980440_0, 0;
+    %load/vec4 v0x59e5e8980650_0;
+    %assign/vec4 v0x59e5e8980730_0, 0;
+    %load/vec4 v0x59e5e8980650_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_0.2, 8;
+    %load/vec4 v0x59e5e8945bf0_0;
+    %assign/vec4 v0x59e5e89802a0_0, 0;
+T_0.2 ;
+T_0.1 ;
+    %jmp T_0;
+    .thread T_0;
+    .scope S_0x59e5e89703d0;
+T_1 ;
+    %vpi_call/w 4 3 "$dumpfile", "sim_build/hmem_access.fst" {0 0 0};
+    %vpi_call/w 4 4 "$dumpvars", 32'sb00000000000000000000000000000000, S_0x59e5e8933f40 {0 0 0};
+    %end;
+    .thread T_1;
+# The file index is used to find the file name in the following table.
+:file_names 5;
+    "N/A";
+    "<interactive>";
+    "-";
+    "/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/hitachimem/cocotb/../hmem_access.v";
+    "sim_build/cocotb_iverilog_dump.v";
