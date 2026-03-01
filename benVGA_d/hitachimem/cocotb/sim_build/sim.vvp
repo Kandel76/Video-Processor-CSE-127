@@ -8,67 +8,126 @@
 :vpi_module "/usr/lib/x86_64-linux-gnu/ivl/v2005_math.vpi";
 :vpi_module "/usr/lib/x86_64-linux-gnu/ivl/va_math.vpi";
 :vpi_module "/usr/lib/x86_64-linux-gnu/ivl/v2009.vpi";
-S_0x63e8c6a65d90 .scope package, "$unit" "$unit" 2 1;
+S_0x637b9c0ffd90 .scope package, "$unit" "$unit" 2 1;
  .timescale -9 -12;
-S_0x63e8c6a65f40 .scope module, "hmem_access" "hmem_access" 3 1;
+S_0x637b9c0fff20 .scope module, "hmem_access" "hmem_access" 3 1;
  .timescale -9 -12;
     .port_info 0 /INPUT 1 "clk";
     .port_info 1 /INPUT 1 "reset";
-    .port_info 2 /INPUT 1 "ready_i";
-    .port_info 3 /OUTPUT 1 "valid_o";
-    .port_info 4 /OUTPUT 8 "data_o";
-    .port_info 5 /OUTPUT 1 "ready_o";
-    .port_info 6 /INPUT 1 "valid_i";
-    .port_info 7 /INPUT 8 "data_i";
-o0x70aa4768c018 .functor BUFZ 1, C4<z>; HiZ drive
-v0x63e8c6a77800_0 .net "clk", 0 0, o0x70aa4768c018;  0 drivers
-o0x70aa4768c048 .functor BUFZ 8, C4<zzzzzzzz>; HiZ drive
-v0x63e8c6a77bf0_0 .net "data_i", 7 0, o0x70aa4768c048;  0 drivers
-v0x63e8c6ab22a0_0 .var "data_o", 7 0;
-o0x70aa4768c0a8 .functor BUFZ 1, C4<z>; HiZ drive
-v0x63e8c6ab2360_0 .net "ready_i", 0 0, o0x70aa4768c0a8;  0 drivers
-v0x63e8c6ab2440_0 .var "ready_o", 0 0;
-o0x70aa4768c108 .functor BUFZ 1, C4<z>; HiZ drive
-v0x63e8c6ab2570_0 .net "reset", 0 0, o0x70aa4768c108;  0 drivers
-o0x70aa4768c138 .functor BUFZ 1, C4<z>; HiZ drive
-v0x63e8c6ab2650_0 .net "valid_i", 0 0, o0x70aa4768c138;  0 drivers
-v0x63e8c6ab2730_0 .var "valid_o", 0 0;
-E_0x63e8c6a667e0 .event posedge, v0x63e8c6a77800_0;
-S_0x63e8c6aa23d0 .scope module, "cocotb_iverilog_dump" "cocotb_iverilog_dump" 4 1;
+    .port_info 2 /INPUT 1 "wvalid_i";
+    .port_info 3 /INPUT 17 "waddr_i";
+    .port_info 4 /INPUT 8 "wdata_i";
+    .port_info 5 /OUTPUT 1 "wready_o";
+    .port_info 6 /INPUT 17 "raddr_i";
+    .port_info 7 /OUTPUT 1 "rvalid_o";
+    .port_info 8 /OUTPUT 8 "rdata_o";
+    .port_info 9 /OUTPUT 17 "raddr_o";
+    .port_info 10 /INPUT 8 "data_i";
+L_0x637b9c128700 .functor BUFZ 1, v0x637b9c153bf0_0, C4<0>, C4<0>, C4<0>;
+L_0x637b9c1547a0 .functor NOT 1, v0x637b9c153bf0_0, C4<0>, C4<0>, C4<0>;
+o0x76d43917f018 .functor BUFZ 1, C4<z>; HiZ drive
+v0x637b9c1288a0_0 .net "clk", 0 0, o0x76d43917f018;  0 drivers
+v0x637b9c1535a0_0 .var "cyc3_l", 1 0;
+o0x76d43917f078 .functor BUFZ 8, C4<zzzzzzzz>; HiZ drive
+v0x637b9c153680_0 .net "data_i", 7 0, o0x76d43917f078;  0 drivers
+v0x637b9c153740_0 .net "flipping_w", 0 0, L_0x637b9c154810;  1 drivers
+o0x76d43917f0d8 .functor BUFZ 17, C4<zzzzzzzzzzzzzzzzz>; HiZ drive
+v0x637b9c153820_0 .net "raddr_i", 16 0, o0x76d43917f0d8;  0 drivers
+o0x76d43917f108 .functor BUFZ 17, C4<zzzzzzzzzzzzzzzzz>; HiZ drive
+v0x637b9c153950_0 .net "raddr_o", 16 0, o0x76d43917f108;  0 drivers
+v0x637b9c153a30_0 .var "raddr_r", 16 0;
+o0x76d43917f168 .functor BUFZ 8, C4<zzzzzzzz>; HiZ drive
+v0x637b9c153b10_0 .net "rdata_o", 7 0, o0x76d43917f168;  0 drivers
+v0x637b9c153bf0_0 .var "reading_l", 0 0;
+v0x637b9c153cd0_0 .net "reading_w", 0 0, L_0x637b9c128700;  1 drivers
+o0x76d43917f1f8 .functor BUFZ 1, C4<z>; HiZ drive
+v0x637b9c153db0_0 .net "reset", 0 0, o0x76d43917f1f8;  0 drivers
+o0x76d43917f228 .functor BUFZ 1, C4<z>; HiZ drive
+v0x637b9c153e90_0 .net "rvalid_o", 0 0, o0x76d43917f228;  0 drivers
+o0x76d43917f258 .functor BUFZ 17, C4<zzzzzzzzzzzzzzzzz>; HiZ drive
+v0x637b9c153f70_0 .net "waddr_i", 16 0, o0x76d43917f258;  0 drivers
+v0x637b9c154050_0 .var "waddr_r", 16 0;
+o0x76d43917f2b8 .functor BUFZ 8, C4<zzzzzzzz>; HiZ drive
+v0x637b9c154130_0 .net "wdata_i", 7 0, o0x76d43917f2b8;  0 drivers
+o0x76d43917f2e8 .functor BUFZ 1, C4<z>; HiZ drive
+v0x637b9c154210_0 .net "wready_o", 0 0, o0x76d43917f2e8;  0 drivers
+v0x637b9c1542f0_0 .net "writing_w", 0 0, L_0x637b9c1547a0;  1 drivers
+o0x76d43917f348 .functor BUFZ 1, C4<z>; HiZ drive
+v0x637b9c1544e0_0 .net "wvalid_i", 0 0, o0x76d43917f348;  0 drivers
+E_0x637b9c139f60 .event posedge, v0x637b9c1288a0_0;
+L_0x637b9c154810 .part v0x637b9c1535a0_0, 1, 1;
+S_0x637b9c140e80 .scope module, "cocotb_iverilog_dump" "cocotb_iverilog_dump" 4 1;
  .timescale -9 -12;
-    .scope S_0x63e8c6a65f40;
+    .scope S_0x637b9c0fff20;
 T_0 ;
-    %wait E_0x63e8c6a667e0;
-    %load/vec4 v0x63e8c6ab2570_0;
+    %wait E_0x637b9c139f60;
+    %load/vec4 v0x637b9c153db0_0;
     %flag_set/vec4 8;
     %jmp/0xz  T_0.0, 8;
     %pushi/vec4 0, 0, 1;
-    %assign/vec4 v0x63e8c6ab2440_0, 0;
-    %pushi/vec4 0, 0, 1;
-    %assign/vec4 v0x63e8c6ab2730_0, 0;
-    %pushi/vec4 0, 0, 8;
-    %assign/vec4 v0x63e8c6ab22a0_0, 0;
+    %assign/vec4 v0x637b9c153bf0_0, 0;
+    %pushi/vec4 0, 0, 2;
+    %assign/vec4 v0x637b9c1535a0_0, 0;
     %jmp T_0.1;
 T_0.0 ;
-    %load/vec4 v0x63e8c6ab2360_0;
-    %assign/vec4 v0x63e8c6ab2440_0, 0;
-    %load/vec4 v0x63e8c6ab2650_0;
-    %assign/vec4 v0x63e8c6ab2730_0, 0;
-    %load/vec4 v0x63e8c6ab2650_0;
+    %load/vec4 v0x637b9c153740_0;
     %flag_set/vec4 8;
     %jmp/0xz  T_0.2, 8;
-    %load/vec4 v0x63e8c6a77bf0_0;
-    %assign/vec4 v0x63e8c6ab22a0_0, 0;
+    %pushi/vec4 0, 0, 2;
+    %assign/vec4 v0x637b9c1535a0_0, 0;
+    %load/vec4 v0x637b9c153bf0_0;
+    %inv;
+    %assign/vec4 v0x637b9c153bf0_0, 0;
+    %jmp T_0.3;
 T_0.2 ;
+    %load/vec4 v0x637b9c1535a0_0;
+    %addi 1, 0, 2;
+    %assign/vec4 v0x637b9c1535a0_0, 0;
+T_0.3 ;
 T_0.1 ;
     %jmp T_0;
     .thread T_0;
-    .scope S_0x63e8c6aa23d0;
+    .scope S_0x637b9c0fff20;
 T_1 ;
-    %vpi_call/w 4 3 "$dumpfile", "sim_build/hmem_access.fst" {0 0 0};
-    %vpi_call/w 4 4 "$dumpvars", 32'sb00000000000000000000000000000000, S_0x63e8c6a65f40 {0 0 0};
-    %end;
+    %wait E_0x637b9c139f60;
+    %load/vec4 v0x637b9c153db0_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_1.0, 8;
+    %pushi/vec4 0, 0, 17;
+    %assign/vec4 v0x637b9c153a30_0, 0;
+    %pushi/vec4 0, 0, 17;
+    %assign/vec4 v0x637b9c154050_0, 0;
+    %jmp T_1.1;
+T_1.0 ;
+    %load/vec4 v0x637b9c153740_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_1.2, 8;
+    %load/vec4 v0x637b9c1542f0_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_1.4, 8;
+    %load/vec4 v0x637b9c153f70_0;
+    %assign/vec4 v0x637b9c154050_0, 0;
+    %jmp T_1.5;
+T_1.4 ;
+    %load/vec4 v0x637b9c153820_0;
+    %assign/vec4 v0x637b9c153a30_0, 0;
+T_1.5 ;
+    %jmp T_1.3;
+T_1.2 ;
+    %load/vec4 v0x637b9c153a30_0;
+    %assign/vec4 v0x637b9c153a30_0, 0;
+    %load/vec4 v0x637b9c154050_0;
+    %assign/vec4 v0x637b9c154050_0, 0;
+T_1.3 ;
+T_1.1 ;
+    %jmp T_1;
     .thread T_1;
+    .scope S_0x637b9c140e80;
+T_2 ;
+    %vpi_call/w 4 3 "$dumpfile", "sim_build/hmem_access.fst" {0 0 0};
+    %vpi_call/w 4 4 "$dumpvars", 32'sb00000000000000000000000000000000, S_0x637b9c0fff20 {0 0 0};
+    %end;
+    .thread T_2;
 # The file index is used to find the file name in the following table.
 :file_names 5;
     "N/A";

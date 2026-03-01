@@ -46,29 +46,30 @@ async def reset_test(dut):
     # cocotb.start_soon(generate_clock(dut))
     cocotb.start_soon(generate_clk_and_reset(dut))
 
-    await FallingEdge(dut.clk)
+    await FallingEdge(dut.reset) # extra wait to test reset
     #initalize values
-    dut.data_i.value = 0x00
-    dut.valid_i.value = 0
-    dut.ready_i.value = 0
+    dut.wvalid_i.value = 0
+    dut.waddr_i.value = 0
+    dut.wdata_i.value = 0
+    dut.wready_o.value = 0
+    dut.raddr_i.value = 0
+    dut.data_i.value = 0
 
     await FallingEdge(dut.reset)
     await FallingEdge(dut.clk)
     #always wait til after reset ------
 
+    dut.waddr_i.value = 77
+    dut.raddr_i.value = 77
+    for _ in range(6):
+        await FallingEdge(dut.clk)
+
+    dut.waddr_i.value = 60000
+    dut.raddr_i.value = 60000
+    for _ in range(6):
+        await FallingEdge(dut.clk)
     
-    dut.ready_i.value = 1           #interface asks for data
-    await RisingEdge(dut.ready_o)   #wait for module to ask, then run mem_access
-    await mem_access(dut, DATA=0xff)
 
-    print(dut.valid_o.value)
-    print(dut.data_o.value)
-    await RisingEdge(dut.valid_o)   #wait for module to say ready
-    await FallingEdge(dut.clk)
-    print("----")
-    print(dut.valid_o.value)
-    print(dut.data_o.value)
 
-    #extra clock edges at end to see final values
     await FallingEdge(dut.clk)
     await FallingEdge(dut.clk)
