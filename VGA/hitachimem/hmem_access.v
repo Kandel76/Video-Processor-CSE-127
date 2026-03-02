@@ -15,7 +15,7 @@ module hmem_access (
     output [7:0] rdata_o,
 
     //memory side
-    //need two memory chips, control with OE
+    //need two memory chips, control with CS
     output [14:0] addr_o,   // each chip only has 15 address bits
     output [0:0] nCS1_o,    // top (16th) bit of address
     output [0:0] nCS2_o,    // !(CS1)

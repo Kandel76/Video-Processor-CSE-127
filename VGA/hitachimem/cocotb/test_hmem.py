@@ -40,21 +40,24 @@ async def mem_access(dut, DATA=0xe0): # going to depreciate this
     dut.data_i.value = DATA
     dut.valid_i.value = 1
 
-async def external_mem1(dut):    # simulated external memory
+async def external_mem1(dut):    # simulated external memory 1
     #dictionary to simulate specified addresses
+    # look for low nCS1
+    # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
     sim_memory = dict()
 
     # writing
     while (1):
-        action = await First(FallingEdge(dut.nWE), FallingEdge(dut.nOE))
-        if (action == FallingEdge(dut.nWE)):
-            await Timer(85, unit="ns")
-            sim_memory[str(dut.addr_o.value)] = dut.data_o.value
-        else:
-            dut.data_i.value = 0xbd
-            if (str(dut.addr_o.value) in sim_memory):
+        action = await First(FallingEdge(dut.nWE), FallingEdge(dut.nOE)) # wait for a read or write to start
+        if (dut.nCS1_o.value == 0): #if chip one is selected
+            if (action == FallingEdge(dut.nWE)):
                 await Timer(85, unit="ns")
-                dut.data_i.value = sim_memory[str(dut.addr_o.value)]
+                sim_memory[str(dut.addr_o.value)] = dut.data_o.value
+            else:
+                dut.data_i.value = 0xbd
+                if (str(dut.addr_o.value) in sim_memory):
+                    await Timer(85, unit="ns")
+                    dut.data_i.value = sim_memory[str(dut.addr_o.value)]
 
 
 # tests =============================================================
@@ -82,6 +85,38 @@ async def reset_test(dut):
     for _ in range(6):
         await FallingEdge(dut.clk)
 
+    dut.waddr_i.value = 31000
+    dut.raddr_i.value = 77
+    for _ in range(6):
+        await FallingEdge(dut.clk)
+
+    await FallingEdge(dut.clk)
+    await FallingEdge(dut.clk)
+
+@cocotb.test()
+async def write_read_test(dut):
+
+    # cocotb.start_soon(generate_clock(dut))
+    cocotb.start_soon(generate_clk_and_reset(dut))
+
+    cocotb.start_soon(external_mem1(dut))
+
+    await FallingEdge(dut.reset) # extra wait to test reset
+    #initalize values
+    dut.waddr_i.value = 0
+    dut.wdata_i.value = 0
+    dut.raddr_i.value = 0
+    dut.data_i.value = 0
+
+    await FallingEdge(dut.reset)
+    await FallingEdge(dut.clk)
+    #always wait til after reset ------
+
+    dut.waddr_i.value = 0x77
+    dut.wdata_i.value = 0x69
+    for _ in range(6):
+        await FallingEdge(dut.clk)
+    
     dut.waddr_i.value = 31000
     dut.raddr_i.value = 77
     for _ in range(6):
