@@ -18,6 +18,3 @@ COCOTB_TEST_MODULES = test_hmem
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
-view : sim_build/mem2vga.fst
-	gtkwave sim_build/mem2vga.fst
-

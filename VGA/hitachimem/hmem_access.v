@@ -35,6 +35,7 @@ module hmem_access (
 
     wire [15:0] active_address;
 
+    logic [0:0] rvalid_r;
     logic [16:0] raddr_r, waddr_r;
     logic [7:0] wdata_r, rdata_r;
 
@@ -50,8 +51,8 @@ module hmem_access (
     assign nWE = ~(writing_w);
 
     //reader side
-    assign rvalid_o = flipping_w & reading_w;
-    assign rdata_o  = data_i;
+    assign rvalid_o = rvalid_r;
+    assign rdata_o  = rdata_r;
 
     //writer side
     assign wready_o = flipping_w & reading_w;
@@ -81,17 +82,18 @@ module hmem_access (
             waddr_r <= 0;
             wdata_r <= 0;
             rdata_r <= 0;
+            rvalid_r <= 1'b0;
         end else if (flipping_w) begin
-            if (reading_w) begin    // perhaps change this to reading_w
+            if (reading_w) begin //ending a read cycle
+                rvalid_r <= 1'b1;
+                rdata_r <= data_i;
                 waddr_r <= waddr_i;
                 wdata_r <= wdata_i;
-            end else begin
+            end else begin //ending a write cycle
+                rvalid_r <= 1'b0;
                 raddr_r <= raddr_i;
             end
-        end else begin
-            raddr_r <= raddr_r;
-            waddr_r <= waddr_r;
-        end
+        end     
     end
 
 
