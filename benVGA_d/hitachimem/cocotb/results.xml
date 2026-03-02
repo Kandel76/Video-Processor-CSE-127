@@ -1,6 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1771983907" />
-    <testcase name="reset_test" classname="test_hmem" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/hitachimem/cocotb/test_hmem.py" lineno="43" time="0.0021958351135253906" sim_time_ns="760.0" ratio_time="346109.776330076" />
+    <property name="random_seed" value="1772479094" />
+    <testcase name="reset_test" classname="test_hmem" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/hitachimem/cocotb/test_hmem.py" lineno="61" time="0.004348039627075195" sim_time_ns="760.0" ratio_time="174791.41525470198" />
   </testsuite>
 </testsuites>

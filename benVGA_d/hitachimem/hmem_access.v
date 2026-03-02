@@ -3,33 +3,63 @@ module hmem_access (
     input [0:0] reset,
 
     //write interface
-    input [0:0] wvalid_i,
-    input [16:0] waddr_i, //320*240 = 76800 addresses -> clog2 -> 17 address bits
+    // input [0:0] wvalid_i,
+    input [15:0] waddr_i, //320*240 = 76800 pixels. 2 pixels per address -> 38400 addresses. clog2 -> 16 address bits
     input [7:0] wdata_i,
     output [0:0] wready_o,
 
     //read interface
     //input [7:0] rready_i, //ommitting ready because it should always be 1
-    input [16:0] raddr_i,
+    input [15:0] raddr_i,
     output [0:0] rvalid_o,
     output [7:0] rdata_o,
 
     //memory side
-    output [16:0] raddr_o,
+    //need two memory chips, control with OE
+    output [14:0] addr_o,   // each chip only has 15 address bits
+    output [0:0] nCS1_o,    // top (16th) bit of address
+    output [0:0] nCS2_o,    // !(CS1)
+    output [0:0] nOE,       // output enable. same for both chips
+    output [0:0] nWE,       // write enable.  same for both chips
+
+    output [7:0] data_o,
     input [7:0] data_i
 );
 
-    // determine whether we're reading or writing =============================
-    // alternate every 3 cycles
-
+    //declarations ============================================================
     logic [0:0] reading_l;
     logic [1:0] cyc3_l; //increment every cycle 00->01->10->00
     wire [0:0] writing_w;
     wire [0:0] reading_w;
     wire [0:0] flipping_w; //cycle before switching from read to write
 
+    wire [15:0] active_address;
+
+    logic [16:0] raddr_r, waddr_r;
+    logic [7:0] wdata_r, rdata_r;
+
+    // assigning outputs ======================================================
+    //external mem
+    assign active_address = reading_w ? raddr_r : waddr_r;
+    assign addr_o = active_address[14:0];
+    assign nCS1_o = ~(~(active_address[15]) | reset);
+    assign nCS2_o = ~( active_address[15]   | reset);
+
+    assign data_o = wdata_r;
+    assign nOE = ~(reading_w);
+    assign nWE = ~(writing_w);
+
+    //reader side
+    assign rvalid_o = flipping_w & reading_w;
+    assign rdata_o  = data_i;
+
+    //writer side
+    assign wready_o = flipping_w & reading_w;
+
+    // determine whether we're reading or writing =============================
+    // alternate every 3 cycles
     assign reading_w = reading_l;
-    assign writing_w = ~reading_l;
+    assign writing_w = (~reading_l) & ~reset;
     assign flipping_w = cyc3_l[1];
 
     always @(posedge clk) begin
@@ -44,19 +74,15 @@ module hmem_access (
         end
     end
 
-
     //buffering addresses and data ============================================
-
-    logic [16:0] raddr_r, waddr_r;
-    logic [7:0] wdata_r;
-
     always @(posedge clk) begin
         if (reset) begin
             raddr_r <= 0;
             waddr_r <= 0;
             wdata_r <= 0;
+            rdata_r <= 0;
         end else if (flipping_w) begin
-            if (writing_w) begin    // perhaps change this to reading_w
+            if (reading_w) begin    // perhaps change this to reading_w
                 waddr_r <= waddr_i;
                 wdata_r <= wdata_i;
             end else begin
@@ -67,5 +93,6 @@ module hmem_access (
             waddr_r <= waddr_r;
         end
     end
+
 
 endmodule
