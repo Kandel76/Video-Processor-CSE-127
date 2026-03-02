@@ -1,2 +1,5 @@
 obj_dir/
 /frame_0.bmp
+__pycache__/
+results.xml
+sim_build/

@@ -52,9 +52,9 @@ async def external_mem1(dut):    # simulated external memory
             sim_memory[str(dut.addr_o.value)] = dut.data_o.value
         else:
             dut.data_i.value = 0xbd
-            if (dut.addr_o in sim_memory):
+            if (str(dut.addr_o.value) in sim_memory):
                 await Timer(85, unit="ns")
-                dut.data_i.value = sim_memory[dut.addr_o.value]
+                dut.data_i.value = sim_memory[str(dut.addr_o.value)]
 
 
 # tests =============================================================
