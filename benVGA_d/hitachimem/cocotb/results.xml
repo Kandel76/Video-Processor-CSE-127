@@ -1,6 +1,0 @@
-<testsuites name="results">
-  <testsuite name="all" package="all">
-    <property name="random_seed" value="1772483250" />
-    <testcase name="reset_test" classname="test_hmem" file="/home/smore/127CSE/Video-Processor-CSE-127/benVGA_d/hitachimem/cocotb/test_hmem.py" lineno="61" time="0.003063678741455078" sim_time_ns="760.0" ratio_time="248067.78521400777" />
-  </testsuite>
-</testsuites>
