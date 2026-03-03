@@ -69,12 +69,15 @@ async def reset_test(dut):
         await FallingEdge(dut.clk)
         await FallingEdge(dut.clk)
 
-        #BMP does pixels bottom to top
+        #BMP does pixels bottom to top, left to right
+
         for j in range(479, -1, -1): 
-            for i in range (0, 640, 1):
+            for i in range (639, -1, -1):
+                # if (dut.active_o.value == 0):
+                #     await RisingEdge(dut.active_o)
                 await FallingEdge(dut.clk)
-                if (dut.active_o.value == 0):
-                    await RisingEdge(dut.active_o)
+                while (dut.active_o.value == 0):
+                    await FallingEdge(dut.clk)
                 byte = (int(dut.pixel_o.value) & 0x0F0)
 
                 f.write(bytearray([byte, byte, byte]))

@@ -9,6 +9,8 @@ WAVES ?= 1
 
 VERILOG_SOURCES += $(PWD)/../mem2vga.v
 VERILOG_SOURCES += $(PWD)/../sync_manager.v
+VERILOG_SOURCES += $(PWD)/../../onchipmem/gf180mcu_ocd_ip_sram__sram256x8m8wm1.v
+VERILOG_SOURCES += $(PWD)/../../hitachimem/hmem_access.v
 
 # name of the toplevel module being tested
 COCOTB_TOPLEVEL = mem2vga

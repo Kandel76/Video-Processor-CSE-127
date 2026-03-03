@@ -85,7 +85,8 @@ module sync_manager (
         end
             
             
-        active_area_next = coord_x < ACTIVE_WIDTH && coord_y < ACTIVE_HEIGHT;
+        //active_area_next = coord_x < ACTIVE_WIDTH && coord_y < ACTIVE_HEIGHT;
+        active_area_next = coord_x < ACTIVE_WIDTH && coord_y < ACTIVE_HEIGHT; //modified
     end
     
 endmodule
