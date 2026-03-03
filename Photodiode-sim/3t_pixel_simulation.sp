@@ -9,11 +9,8 @@
 VDD VDD 0 DC 3.3
 VSS VSS 0 DC 0
 
-* nodes are VDD, VSS, PD, OUT, SEL
-
 * Transistors (drain, gate, source, body)
 * M1 = Reset, M2 = Source-follower, M3 = Row-select
-
 M1 PD RESET VDD VSS nfet_03v3 w=3.7e-7 l=3.6e-7
 M2 OUT PD VDD VSS nfet_03v3 w=1.5e-6 l=3.6e-7
 M3 COL SEL OUT VSS nfet_03v3 w=3.7e-7 l=3.6e-7
@@ -21,11 +18,11 @@ M3 COL SEL OUT VSS nfet_03v3 w=3.7e-7 l=3.6e-7
 * Photodiode
 D1 VSS PD diode_nw2ps_03v3 area=3.9e-11
 
-* reset and select signals
+* Signals (Reset, Select, Light)
+* PULSE(V_start, V_end, Delay, Rise Time, Fall Time, Hold Time, Period)
 VRESET RESET 0 PULSE(0 3.3 0.25m 1u 1u 0.125m 2m)
 VSEL SEL 0 PULSE(0 3.3 1.75m 1u 1u 1u 1m)
 
-* our fake light
 ILIGHT PD VSS PULSE(0 100pA 1m 1u 1u 0.5m 4m)
 
 C_COL COL VSS 20f
