@@ -1,7 +1,5 @@
 //this design assumes adc outputs 1 code at a time
-module sar_adc #(
-
-)(
+module sar_adc (
     input logic [0:0] adc_clk,
     input logic [0:0] cmp_o,
     input logic [0:0] read_en,
@@ -60,7 +58,7 @@ always_comb begin
 
         CODE_SEND: if (code_hold[2] && code_hold[1]) begin 
             state_n = COMPARE;
-        end;
+        end
 
         COMPARE: if (comp_cycle == 2'b11) begin 
             state_n = CODE_STORE; 
