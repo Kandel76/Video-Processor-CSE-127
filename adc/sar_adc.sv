@@ -39,7 +39,6 @@ assign adc_dac_o = (state == CODE_SEND) ? (adc_code | (4'b1 << bit_index)) : adc
 //FSM state logic
 always_comb begin
     state_n = state; 
-    bit_index = 2'b11 - comp_cycle; 
     case (state)
 
         IDLE: if (read_en) begin 
@@ -82,6 +81,7 @@ always_ff @(posedge adc_clk) begin
         dac_code_sent <= '0; 
         hold <= '0; 
         code_hold <= '0; 
+        bit_index <= 2'b11; 
         state <= IDLE;  
     end
     else if (state == IDLE) begin 
@@ -90,6 +90,7 @@ always_ff @(posedge adc_clk) begin
         dac_code_sent <= '0;
         hold <= '0; 
         code_hold <= '0;
+        bit_index <= 2'b11; 
     end
     else if (state == VIN_HOLD) begin 
         if (state_n == CODE_SEND) begin 
@@ -116,6 +117,7 @@ always_ff @(posedge adc_clk) begin
         else begin 
             adc_code[bit_index] <= cmp_o; 
         end
+        bit_index <= bit_index - 1; 
         comp_cycle <= comp_cycle + 1; 
     end
     if (state == CODE_STORE) begin 
