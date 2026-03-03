@@ -6,10 +6,6 @@ _Part of our Video-Processor Design, this section details the construction and a
 
 **ADC** (Analog-Digital Converter)
 
-**Comparator**
-# GF180 Dynamic Comparator Simulation
-## SAR ADC Comparator Characterization (3.3 V Operation)
-
 ## Comparator Overview
 
 The comp_gf180.sp file simulates a clocked comparator implemented with the GF180MCU standard-cell logic gates. The comparator is intended for use inside a Successive Approximation Register (SAR) ADC, where it makes the decision:
