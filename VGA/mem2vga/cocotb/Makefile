@@ -8,7 +8,6 @@ TOPLEVEL_LANG ?= verilog
 WAVES ?= 1
 
 VERILOG_SOURCES += $(PWD)/../mem2vga.v
-VERILOG_SOURCES += $(PWD)/../axi_manager.v
 VERILOG_SOURCES += $(PWD)/../sync_manager.v
 
 # name of the toplevel module being tested
