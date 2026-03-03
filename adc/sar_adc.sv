@@ -110,7 +110,10 @@ always_ff @(posedge adc_clk) begin
         adc_code[bit_index] <= 1'b1;
     end
     else if (state == COMPARE) begin 
-        if (cmp_o == 0) begin 
+        if (cmp_o == 1) begin 
+            adc_code[bit_index] <= 1'b0; 
+        end
+        else begin 
             adc_code[bit_index] <= cmp_o; 
         end
         comp_cycle <= comp_cycle + 1; 
