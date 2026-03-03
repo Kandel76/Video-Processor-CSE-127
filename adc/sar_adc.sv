@@ -1,7 +1,5 @@
 //this design assumes adc outputs 1 code at a time
-module sar_adc #(
-
-)(
+module sar_adc (
     input logic [0:0] adc_clk,
     input logic [0:0] cmp_o,
     input logic [0:0] read_en,
@@ -41,7 +39,6 @@ assign adc_dac_o = (state == CODE_SEND) ? (adc_code | (4'b1 << bit_index)) : adc
 //FSM state logic
 always_comb begin
     state_n = state; 
-    bit_index = 2'b11 - comp_cycle; 
     case (state)
 
         IDLE: if (read_en) begin 
@@ -60,7 +57,7 @@ always_comb begin
 
         CODE_SEND: if (code_hold[2] && code_hold[1]) begin 
             state_n = COMPARE;
-        end;
+        end
 
         COMPARE: if (comp_cycle == 2'b11) begin 
             state_n = CODE_STORE; 
@@ -84,6 +81,7 @@ always_ff @(posedge adc_clk) begin
         dac_code_sent <= '0; 
         hold <= '0; 
         code_hold <= '0; 
+        bit_index <= 2'b11; 
         state <= IDLE;  
     end
     else if (state == IDLE) begin 
@@ -92,6 +90,7 @@ always_ff @(posedge adc_clk) begin
         dac_code_sent <= '0;
         hold <= '0; 
         code_hold <= '0;
+        bit_index <= 2'b11; 
     end
     else if (state == VIN_HOLD) begin 
         if (state_n == CODE_SEND) begin 
@@ -112,9 +111,13 @@ always_ff @(posedge adc_clk) begin
         adc_code[bit_index] <= 1'b1;
     end
     else if (state == COMPARE) begin 
-        if (cmp_o == 0) begin 
+        if (cmp_o == 1) begin 
+            adc_code[bit_index] <= 1'b1; 
+        end
+        else begin 
             adc_code[bit_index] <= cmp_o; 
         end
+        bit_index <= bit_index - 1; 
         comp_cycle <= comp_cycle + 1; 
     end
     if (state == CODE_STORE) begin 
