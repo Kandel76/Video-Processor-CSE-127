@@ -14,6 +14,17 @@ Off-Chip SRAM
 SRAM Double Buffer  
 VGA Output  
 
+## OpenImageSensor: Single Pixel Operation
+
+This simulates a single 3-transistor (3T) active pixel sensor at 3.3 V. The pixel consists of a reset transistor, a source follower transistor, a row-select transistor, and a photodiode.
+
+**Pixel Overview**
+
+1. The pixel is reset to a known voltage.
+2. It integrates light by converting photocurrent into a decreasing voltage.
+3. The voltage is buffered.
+4. The signal is transferred for readout.
+
 ## ADC Overview
 
 This module implements a 4-bit Successive Approximation Register (SAR) Analog-to-Digital Converter (ADC) controller. The design assumes that one digital output code is generated for each conversion.
@@ -129,4 +140,3 @@ _Part of our Video-Processor Design, this section details the construction and a
 
 **DAC** (Digital-Analog Converter)
 
-**Diode Interface**
