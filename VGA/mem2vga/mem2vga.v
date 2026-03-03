@@ -43,12 +43,17 @@ module mem2vga
     wire [1:0] quadrant_w;
 
     //buffers
-    wire [0:0] buf1_cen_w, buf2_cen_w;
-    wire [0:0] buf1_gwen_w, buf2_gwen_w;
-    wire [7:0] buf1_wen_w, buf2_wen_w;
-    wire [7:0] buf1_addr_w, buf2_addr_w;
-    wire [7:0] buf1_wdata_w, buf2_wdata_w;
-    wire [7:0] buf1_rdata_w, buf2_rdata_w;
+    logic [0:0] buf1_cen_w, buf2_cen_w;
+    logic [0:0] buf1_gwen_w, buf2_gwen_w;
+    logic [7:0] buf1_wen_w, buf2_wen_w;
+    logic [7:0] buf1_addr_w, buf2_addr_w;
+    logic [7:0] buf1_wdata_w, buf2_wdata_w;
+    logic [7:0] buf1_rdata_w, buf2_rdata_w;
+
+    //memory
+    wire [15:0] mem_raddr_i;
+    wire [7:0] mem_rdata_o;
+    wire [0:0] mem_rvalid_o;
 
     // Debug assignments ============================================
     // This should be empty in the final versions
@@ -112,9 +117,33 @@ module mem2vga
 
     // Double Buffer ================================================
 
-    // if even row, read buf 1 write buf 2
+    
+    //reading
+    always @(*) begin
+        if (odd_row_w) begin
+            // if odd  row, read buf 2 write buf 1
+            buf1_addr_w = mem_raddr_i;
+            buf1_gwen_w = 0;
+            buf1_wen_w = {8{~mem_rvalid_o}};
+            buf1_wdata_w = mem_rdata_o;
 
-    // if odd  row, read buf 2 write buf 1
+            buf2_gwen_w = 1;
+            buf2_wen_w = 8'hff;
+            buf2_wdata_w = 8'h00;
+            buf2_addr_w = big_pix_addr;
+        end else begin
+            // if even row, read buf 1 write buf 2
+            buf2_addr_w = mem_raddr_i;
+            buf2_gwen_w = 0;
+            buf2_wen_w = {8{~mem_rvalid_o}};
+            buf2_wdata_w = mem_rdata_o;
+
+            buf1_gwen_w = 1;
+            buf1_wen_w = 8'hff;
+            buf1_wdata_w = 8'h00;
+            buf1_addr_w = big_pix_addr;
+        end
+    end
     
     //instantiate on-chip memory module s
     gf180mcu_ocd_ip_sram__sram256x8m8wm1 buf1(
