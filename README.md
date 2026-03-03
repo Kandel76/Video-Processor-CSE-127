@@ -8,9 +8,7 @@ _Part of our Video-Processor Design, this section details the construction and a
 
 ## Comparator Overview
 
-The comp_gf180.sp file simulates a clocked comparator implemented with the GF180MCU standard-cell logic gates. The comparator is intended for use inside a Successive Approximation Register (SAR) ADC, where it makes the decision:
-
-    Vin (sampled photodiode signal)  ?  Vtest (CDAC output)
+The comp_gf180.sp file simulates a clocked comparator implemented with the GF180MCU standard-cell logic gates. The comparator is intended for use inside a Successive Approximation Register (SAR) ADC, where the comparator determines whether the sampled photodiode voltage (Vin) is greater than or less than the CDAC output voltage (Vtest).
 
 This simulation is intended for:
 
@@ -20,12 +18,6 @@ This simulation is intended for:
 - UCSC Academic research and coursework
 
 It is not intended for final silicon verification.
-
-## Concept Overview:
-
-    Photodiode → Sample/Hold (Vin) → Comparator ← CDAC (Vtest)
-                                           ↓
-                                         SAR Logic
 
 In this simulation:
 - `vinp` is the sampled photodiode voltage.
