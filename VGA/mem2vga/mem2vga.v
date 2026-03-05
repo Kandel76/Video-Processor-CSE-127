@@ -116,9 +116,8 @@ module mem2vga
     );
 
     // Double Buffer ================================================
-
     
-    //reading
+    //mux between which buffer is being read into and out of
     always @(*) begin
         if (odd_row_w) begin
             // if odd  row, read buf 2 write buf 1
@@ -139,7 +138,7 @@ module mem2vga
             buf2_wdata_w = mem_rdata_o;
 
             buf1_gwen_w = 1;
-            buf1_wen_w = 8'hff;
+            buf1_wen_w = 8'hff; //w values shouldn't matter
             buf1_wdata_w = 8'h00;
             buf1_addr_w = big_pix_addr;
         end
