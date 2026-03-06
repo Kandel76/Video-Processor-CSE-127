@@ -1,7 +1,7 @@
 module scan_controller #(
     parameter int ROWS = 240,
     parameter int COLS = 320,
-    parameter int ADC_BANKS = 4,
+    parameter int ADC_BANKS = 320,
     parameter int DATA_BITS = 4, 
     parameter int PIXEL_BUS_WIDTH = DATA_BITS * (COLS / ADC_BANKS), //total bits read from ADC each step
     parameter int ADC_TIMEOUT_CYCLES = 20
@@ -21,7 +21,7 @@ module scan_controller #(
     output logic [ROWS-1:0]                   row_enable,    //should this be one hot or indexed for row_en?
     output logic [$clog2(ADC_BANKS)-1:0]      bank_sel, //which bank to start conversion on
     output logic                              adc_start, //start conversion for the specifc adc
-    output logic [DATA_BITS-1:0]              pixel_data, 
+    output logic [(DATA_BITS*ADC_BANKS)-1:0]    pixel_data, 
     output logic [$clog2(ROWS)-1:0]           pixel_row, //current row being output -- used for mapping to pixel array
     output logic [$clog2(COLS)-1:0]           pixel_col, //current col being output -- used for mapping to pixel array
     output logic                              pixel_valid,  //used later for mapping
@@ -54,12 +54,12 @@ module scan_controller #(
     logic [$clog2(ROWS)-1:0]     row_cnt_d, row_cnt_q;   //row counter
     logic [$clog2(STEPS_PER_ROW)-1:0] step_cnt_d, step_cnt_q;  //step counter for columns
     logic [$clog2(ADC_TIMEOUT_CYCLES)-1:0] timeout_cnt_d, timeout_cnt_q; //timeout counter for ADC
-    logic [DATA_BITS-1:0] pixel_data_d, pixel_data_q; //register to hold pixel data from ADC
+    logic [DATA_BITS*ADC_BANKS-1:0] pixel_data_d, pixel_data_q; //register to hold pixel data from ADC
     logic pixel_valid_d, pixel_valid_q; //register to hold pixel valid signal
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        state_q       <= IDLE;
+        state1_q       <= IDLE;
         row_cnt_q     <= 0;
         step_cnt_q    <= 0;
         timeout_cnt_q <= 0;
@@ -96,7 +96,6 @@ end
         pixel_valid_d = pixel_valid_q
         case (state_q)
             IDLE: begin
-
                 //wait for a flag to start the next frame
                 if (frame_start) begin
                     state_d = RESET_PIXELS; 
@@ -108,7 +107,6 @@ end
             end
             
             RESET_PIXELS: begin
-
                 // global reset of pixels, thats it
                 pixel_reset = 1;
                 state_d = INTEGRATE;
@@ -116,7 +114,6 @@ end
             
             INTEGRATE: begin
                 //this activats integrate signal and waits for the integration done signal to proceed
-
                 integrate = 1; //start integration time for pixels
                 timeout_cnt_d = timeout_cnt_q + 1; //increment timeout counter for integration time
 
@@ -152,7 +149,7 @@ end
                     timeout_cnt_d = 0; //reset timeout counter for next step
                     //if adc is high, capture data, if timeout, pixel data will be 0
                     if (adc_done) begin
-                        pixel_data_d = adc_data[DATA_BITS-1:0]; //still unclear/////////////////////////////////////////////////////////
+                        pixel_data_d = adc_data[(DATA_BITS*ADC_BANKS)-1:0]; //still unclear/////////////////////////////////////////////////////////
                     end else begin
                         pixel_data_d = 0; //or some error code
                     end
