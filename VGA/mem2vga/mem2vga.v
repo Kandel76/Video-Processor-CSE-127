@@ -116,54 +116,8 @@ module mem2vga
     );
 
     // Double Buffer ================================================
+    // its own module
     
-    //mux between which buffer is being read into and out of
-    always @(*) begin
-        if (odd_row_w) begin
-            // if odd  row, read buf 2 write buf 1
-            buf1_addr_w = mem_raddr_i;
-            buf1_gwen_w = 0;
-            buf1_wen_w = {8{~mem_rvalid_o}};
-            buf1_wdata_w = mem_rdata_o;
-
-            buf2_gwen_w = 1;
-            buf2_wen_w = 8'hff;
-            buf2_wdata_w = 8'h00;
-            buf2_addr_w = big_pix_addr;
-        end else begin
-            // if even row, read buf 1 write buf 2
-            buf2_addr_w = mem_raddr_i;
-            buf2_gwen_w = 0;
-            buf2_wen_w = {8{~mem_rvalid_o}};
-            buf2_wdata_w = mem_rdata_o;
-
-            buf1_gwen_w = 1;
-            buf1_wen_w = 8'hff; //w values shouldn't matter
-            buf1_wdata_w = 8'h00;
-            buf1_addr_w = big_pix_addr;
-        end
-    end
-    
-    //instantiate on-chip memory module s
-    gf180mcu_ocd_ip_sram__sram256x8m8wm1 buf1(
-        .CLK(clk),
-        .CEN(buf1_cen_w),
-        .GWEN(buf1_gwen_w),
-        .WEN(buf1_wen_w), //8 bits
-        .A(buf1_addr_w), //8 bits
-        .D(buf1_wdata_w), //8 bits
-        .Q(buf1_rdata_w) //8 bits
-    );
-    gf180mcu_ocd_ip_sram__sram256x8m8wm1 buf2(
-        .CLK(clk),
-        .CEN(buf2_cen_w),
-        .GWEN(buf2_gwen_w),
-        .WEN(buf2_wen_w), //8 bits
-        .A(buf2_addr_w), //8 bits
-        .D(buf2_wdata_w), //8 bits
-        .Q(buf2_rdata_w) //8 bits
-    );
-
     //VGA Output ====================================================
     assign pixel_o = {3{brightness_w}};
 
