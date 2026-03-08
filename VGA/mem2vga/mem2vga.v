@@ -42,14 +42,6 @@ module mem2vga
     logic [0:0] odd_row_w;
     wire [1:0] quadrant_w;
 
-    //buffers
-    logic [0:0] buf1_cen_w, buf2_cen_w;
-    logic [0:0] buf1_gwen_w, buf2_gwen_w;
-    logic [7:0] buf1_wen_w, buf2_wen_w;
-    logic [7:0] buf1_addr_w, buf2_addr_w;
-    logic [7:0] buf1_wdata_w, buf2_wdata_w;
-    logic [7:0] buf1_rdata_w, buf2_rdata_w;
-
     //memory
     wire [15:0] mem_raddr_i;
     wire [7:0] mem_rdata_o;
