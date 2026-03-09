@@ -46,9 +46,46 @@ async def external_mem1(dut):    # simulated external memory 1
     # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
     sim_memory = dict()
 
-    # pre-set what is in the memory
-    sim_memory[500] = 0x37
-    sim_memory[501] = 0xBF
+    # pre-set what is in the external memory ============================================
+    sim_memory[int((160*10)+30)] = 0x88
+    sim_memory[int((160*10)+31)] = 0x22
+    sim_memory[int((160*10)+32)] = 0x22
+    sim_memory[int((160*10)+33)] = 0x88
+
+    sim_memory[int((160*11)+30+1)] = 0x88
+    sim_memory[int((160*11)+31+1)] = 0x26
+    sim_memory[int((160*11)+32+1)] = 0x62
+    sim_memory[int((160*11)+33+1)] = 0x88
+
+    sim_memory[int((160*12)+30)] = 0x88
+    sim_memory[int((160*12)+31)] = 0x84
+    sim_memory[int((160*12)+32)] = 0x48
+    sim_memory[int((160*12)+33)] = 0x88
+
+    sim_memory[int((160*13)+30)] = 0x8F
+    sim_memory[int((160*13)+31)] = 0x08
+    sim_memory[int((160*13)+32)] = 0x80
+    sim_memory[int((160*13)+33)] = 0xF8
+
+    sim_memory[int((160*14)+30+1)] = 0x88
+    sim_memory[int((160*14)+31+1)] = 0x88
+    sim_memory[int((160*14)+32+1)] = 0x88
+    sim_memory[int((160*14)+33+1)] = 0x88
+
+    sim_memory[int((160*15)+30)] = 0x28
+    sim_memory[int((160*15)+31)] = 0x88
+    sim_memory[int((160*15)+32)] = 0x88
+    sim_memory[int((160*15)+33)] = 0x82
+
+    sim_memory[int((160*16)+30)] = 0x22
+    sim_memory[int((160*16)+31)] = 0x22
+    sim_memory[int((160*16)+32)] = 0x22
+    sim_memory[int((160*16)+33)] = 0x22
+
+    sim_memory[int((160*17)+30+1)] = 0x22
+    sim_memory[int((160*17)+31+1)] = 0x22
+    sim_memory[int((160*17)+32+1)] = 0x22
+    sim_memory[int((160*17)+33+1)] = 0x22
 
 
     while (1):
