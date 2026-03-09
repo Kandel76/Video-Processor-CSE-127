@@ -5,11 +5,10 @@ module sar_adc (
     input logic [0:0] read_en,
     input logic [0:0] reset_signal,
     //should then tell us which diode to choose based on a mux design
-    input logic [7:0] diode_row,
     output logic [3:0] adc_o,
-    output logic [3:0] adc_dac_o,
     //This will ensure photodiode voltage is captured and tested without changes
-    output logic [0:0] hold_signal
+    output logic [0:0] hold_signal,
+    output logic [0:0] adc_done
     
 );
 //Some states exist to allow for appropiate timing
@@ -32,6 +31,11 @@ logic [2:0] hold, code_hold;
 logic [0:0] dac_code_sent; 
 //counter to keep track of comparison cycle
 logic [1:0] comp_cycle;
+//keep track of diode
+logic [7:0] diode_row;
+//Store the DAC code
+logic [3:0] adc_dac_o;
+
 
 // DAC needs code same cycle, so it needs to be outside always blocks.
 assign adc_dac_o = (state == CODE_SEND) ? (adc_code | (4'b1 << bit_index)) : adc_code;
@@ -83,6 +87,8 @@ always_ff @(posedge adc_clk) begin
         code_hold <= '0; 
         bit_index <= 2'b11; 
         state <= IDLE;  
+        diode_row <= 8'b00000001; 
+        adc_done <= 1'b0;
     end
     else if (state == IDLE) begin 
         adc_code <= '0; 
@@ -91,6 +97,7 @@ always_ff @(posedge adc_clk) begin
         hold <= '0; 
         code_hold <= '0;
         bit_index <= 2'b11; 
+        adc_done <= 1'b0;
     end
     else if (state == VIN_HOLD) begin 
         if (state_n == CODE_SEND) begin 
@@ -115,13 +122,15 @@ always_ff @(posedge adc_clk) begin
             adc_code[bit_index] <= 1'b1; 
         end
         else begin 
-            adc_code[bit_index] <= cmp_o; 
+            adc_code[bit_index] <= 1'b0; 
         end
         bit_index <= bit_index - 1; 
         comp_cycle <= comp_cycle + 1; 
     end
     if (state == CODE_STORE) begin 
         adc_o <= adc_code; 
+        diode_row <= diode_row + 1;
+        adc_done <= 1'b1;  
     end
 end 
 endmodule
