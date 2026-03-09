@@ -13,9 +13,10 @@ module double_buffer (
 
     //output side
     output [3:0] buf_data_o //need a second buffer stage to give 4 bit values
-)
+);
 
     // wires
+    /*
     logic [0:0] buf1_cen_w, buf2_cen_w;
     logic [0:0] buf1_gwen_w, buf2_gwen_w;
     logic [7:0] buf1_wen_w, buf2_wen_w;
@@ -23,11 +24,54 @@ module double_buffer (
     logic [7:0] buf1_wdata_w, buf2_wdata_w;
     logic [7:0] buf1_rdata_w, buf2_rdata_w;
 
-    logic [8:0] buf_raddr_r;
+    logic [7:0] buf_raddr_r, buf_waddr_r;
+    */
+
+
+
+    // ==================================================================================
+    // READING SIDE
+    // ==================================================================================
+    // Issues a read every six cycles
+
+    // 6 cycle logic ==========================================================
+    logic [2:0] count_six;
+    logic [2:0] count_six_n;
+    logic [0:0] sixth_l;
+    logic [0:0] sixth_n;
+
+    always @(posedge clk) begin //create registers
+        if (reset) begin
+            sixth_l <= 0;
+            count_six <= 0;
+        end else begin
+            sixth_l <= sixth_n;
+            count_six <= count_six_n;
+         end
+    end
+
+    always @(*) begin //count six loops from 0->5
+        if (count_six == 5) begin
+            count_six_n = 0;
+        end else begin
+            count_six_n = count_six + 1;
+        end
+    end
+
+    always @(*) begin //sixth is high while count_six is 5
+        if (count_six_n == 5) begin
+            sixth_n = 1;
+        end else begin
+            sixth_n = 0;
+        end
+    end
+
+
 
 
     //mux between which buffer is being read into and out of
     // TODO need to rework a lot of this XXXXXXXXXXXXXXXXXXXXXXXXX
+    /*
     always @(*) begin
         if (odd_row_w) begin
             // if odd  row, read buf 2 write buf 1
@@ -36,10 +80,10 @@ module double_buffer (
             buf1_wen_w = {8{~mem_rvalid_o}};
             buf1_wdata_w = mem_rdata_o;
 
+            buf2_addr_w = big_pix_addr; // TODO, need to change this to buff_addr
             buf2_gwen_w = 1;
             buf2_wen_w = 8'hff;
             buf2_wdata_w = 8'h00;
-            buf2_addr_w = big_pix_addr; // TODO, need to change this to buff_addr
         end else begin
             // if even row, read buf 1 write buf 2
             buf2_addr_w = mem_raddr_i;
@@ -47,14 +91,14 @@ module double_buffer (
             buf2_wen_w = {8{~mem_rvalid_o}};
             buf2_wdata_w = mem_rdata_o;
 
+            buf1_addr_w = big_pix_addr;
             buf1_gwen_w = 1;
             buf1_wen_w = 8'hff; //w values shouldn't matter
             buf1_wdata_w = 8'h00;
-            buf1_addr_w = big_pix_addr;
         end
     end
     
-    //instantiate on-chip memory module s
+    //instantiate on-chip memory modules ======================================
     gf180mcu_ocd_ip_sram__sram256x8m8wm1 buf1(
         .CLK(clk),
         .CEN(buf1_cen_w),
@@ -72,6 +116,6 @@ module double_buffer (
         .A(buf2_addr_w), //8 bits
         .D(buf2_wdata_w), //8 bits
         .Q(buf2_rdata_w) //8 bits
-    );
+    );*/
 
 endmodule
