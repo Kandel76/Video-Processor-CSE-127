@@ -9,7 +9,8 @@ module double_buffer (
 
     //current pixel state
     input [16:0] big_pix_addr,
-    input odd_row_w,
+    input [0:0] newline,
+    input [0:0] endline,
 
     //output side
     output [3:0] buf_data_o //need a second buffer stage to give 4 bit values
@@ -27,21 +28,25 @@ module double_buffer (
     logic [7:0] buf_raddr_r, buf_waddr_r;
     */
 
+    //memory wires
+    wire [15:0] pix_mem_w;
+
+    // Wire assignments =======================================================
+    assign pix_mem_w = big_pix_addr[16:1]; //address for 8 bit memory
 
 
     // ==================================================================================
-    // READING SIDE
+    //                                    READING SIDE
     // ==================================================================================
-    // Issues a read every six cycles
+    // Issues a read address to external memory every six cycles
+    // Buffers external memory data before writing it to the buffer
 
     // 6 cycle logic ==========================================================
-    logic [2:0] count_six;
-    logic [2:0] count_six_n;
-    logic [0:0] sixth_l;
-    logic [0:0] sixth_n;
+    logic [2:0] count_six, count_six_n;
+    logic [0:0] sixth_l, sixth_n;
 
     always @(posedge clk) begin //create registers
-        if (reset) begin
+        if (reset || newline) begin
             sixth_l <= 0;
             count_six <= 0;
         end else begin
@@ -58,13 +63,54 @@ module double_buffer (
         end
     end
 
-    always @(*) begin //sixth is high while count_six is 5
+    always @(*) begin //sixth is high while count_six is 5; every *sixth* cycle
         if (count_six_n == 5) begin
             sixth_n = 1;
         end else begin
             sixth_n = 0;
         end
     end
+
+    // Buffer addressing logic ================================================
+    logic [7:0] rbuf_addr_r, rbuf_addr_n;
+    always @(posedge clk) begin
+        if (reset || newline) begin
+            rbuf_addr_r <= 0;
+        end else begin
+            rbuf_addr_r <= rbuf_addr_n;
+        end
+    end
+
+    always @(*) begin //increment memory after each read
+        if (mem_rvalid) begin
+            rbuf_addr_n = rbuf_addr_r + 1;
+        end else begin
+            rbuf_addr_n = rbuf_addr_r;
+        end
+    end
+
+    //memory addressing logic =================================================
+    logic [15:0] mem_raddr_r, mem_raddr_n; //memory address
+    assign mem_raddr = mem_raddr_r;
+
+    always @(posedge clk) begin
+        if (reset) begin
+            mem_raddr_r <= 0;
+        end else begin
+            mem_raddr_r <= mem_raddr_n;
+        end
+    end
+
+    always @(posedge clk) begin
+        if (newline) begin
+            mem_raddr_n = pix_addr + 16'd160;
+        end else if (sixth_l) begin
+            mem_raddr_n = mem_raddr_r + 1;
+        end else begin
+            mem_raddr_n = mem_raddr_r;
+        end
+    end
+
 
 
 

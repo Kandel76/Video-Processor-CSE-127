@@ -36,6 +36,10 @@ module mem2vga
     wire [9:0] xpos, ypos;
     wire [3:0] brightness_w;
 
+    //double buffer
+    wire [0:0] endline_w;
+    wire [0:0] newline_w;
+
     //addressing
     logic [17:0] small_pix_addr;    //pixel address for VGA
     logic [15:0] big_pix_addr;      //pixel address for diodes
@@ -52,11 +56,17 @@ module mem2vga
     //assign brightness_w = 4'h8;
     //assign brightness_w = pix_addr[15:12];
     //assign brightness_w = pix_addr[3:0];
-    assign brightness_w = big_pix_addr[7:4];
+    //assign brightness_w = big_pix_addr[7:4];
     //assign brightness_w = {(xpos == 641), 3'b000};
     //assign brightness_w = {2{ypos[1:0]}};
     //assign brightness_w = {quadrant_w, 2'b00};
+    assign brightness_w = endline_w ? 4'hf: 4'h8;
+
+    // Real assignments =============================================
     assign active_o = active_area;
+
+    assign endline_w = (xpos == 641) & (odd_row_w);     //Used to switch double buffer
+    assign newline_w = (xpos == 0) & (odd_row_w);       //Used to synchronize double buffer signals
 
     // Determine pixel address ======================================
 
@@ -111,7 +121,7 @@ module mem2vga
     // its own module
     
     //VGA Output ====================================================
-    assign pixel_o = {3{brightness_w}};
+    assign pixel_o = {3{(brightness_w & {4{active_o}})}};
 
     sync_manager syncer(
         .clk(clk),
