@@ -5,9 +5,6 @@ module mem2vga
     // debug
     output active_o,
 
-    // Chip enable for on-chip memory
-    input CEN,
-
     // VGA Interface
     output hsync_o, 
     output vsync_o,
@@ -23,8 +20,8 @@ module mem2vga
     output [14:0] addr_o,   // each chip only has 15 address bits
     output [0:0] nCS1_o,    // top (16th) bit of address
     output [0:0] nCS2_o,    // !(CS1)
-    output [0:0] nOE,       // output enable. same for both chips
-    output [0:0] nWE,       // write enable.  same for both chips
+    output [0:0] nOE_o,       // output enable. same for both chips
+    output [0:0] nWE_o,       // write enable.  same for both chips
 
     output [7:0] data_o,
     input [7:0] data_i
@@ -59,7 +56,8 @@ module mem2vga
     //assign brightness_w = {(xpos == 641), 3'b000};
     //assign brightness_w = {2{ypos[1:0]}};
     //assign brightness_w = {quadrant_w, 2'b00};
-    assign brightness_w = endline_w ? 4'hf: 4'h8;
+    //assign brightness_w = endline_w ? 4'hf: 4'h8;
+    assign brightness_w = buf_data_o;
 
     // Real assignments =============================================
     assign active_o = active_area;
@@ -125,6 +123,7 @@ module mem2vga
         .newline(newline_w),
         .endline(endline_w),
         .active_area(active_area),
+        .xpos(xpos),
 
         //memory side
         .mem_rdata(mem_rdata_o),

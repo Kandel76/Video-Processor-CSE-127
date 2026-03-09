@@ -135,7 +135,8 @@ module double_buffer (
 
     assign rbuf_addr = xpos[9:2]; //increment address every 4 cycles
     assign rbuf_read_next = xpos[1] && xpos[0]; //every 4th cycle. d799 ends in b11;
-    assign rbuf_top = ~(xpos[1] ^ xpos[0]); //x = 3,4... 7,8
+    //assign rbuf_top = ~(xpos[1] ^ xpos[0]); //x = 3,4... 7,8
+    assign rbuf_top = (~xpos[1]);
 
     always @(posedge clk) begin
         if (reset) begin
@@ -181,6 +182,7 @@ module double_buffer (
             buf2_gwen_w = 1;
             buf2_wen_w = 8'hff; //shouldn't matter
             buf2_wdata_w = 8'h00; //also shouldn't matter
+            rbuf_data = buf2_rdata_w;
         end else begin
             // if even row, read buf 1 write buf 2
             buf2_addr_w = wbuf_addr_r;
@@ -192,6 +194,7 @@ module double_buffer (
             buf1_gwen_w = 1;
             buf1_wen_w = 8'hff; //shouldn't matter
             buf1_wdata_w = 8'h00; //also shouldn't matter
+            rbuf_data = buf1_rdata_w;
         end
     end
     

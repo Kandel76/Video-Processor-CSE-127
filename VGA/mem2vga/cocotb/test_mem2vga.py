@@ -1,7 +1,9 @@
 # test mem2vga module
 
 import cocotb
-from cocotb.triggers import FallingEdge, Timer, RisingEdge
+from cocotb.triggers import FallingEdge, Timer, RisingEdge, First
+import logging
+
 
 # helpers =================================================
 async def generate_clock(dut, NUMCYCLES=200):
@@ -27,6 +29,80 @@ async def generate_clk_and_reset(dut, NUMCYCLES=200, BEFORE=2, DURING=3):
         await FallingEdge(dut.clk)
     dut.reset.value = 0
 
+# memory helpers ====================================================
+async def mem_access(dut, DATA=0xe0): # going to depreciate this
+    dut.valid_i.value=0
+
+    #simulate access time
+    await Timer(85, unit="ns")
+
+    #give data
+    dut.data_i.value = DATA
+    dut.valid_i.value = 1
+
+async def external_mem1(dut):    # simulated external memory 1
+    #dictionary to simulate specified addresses
+    # look for low nCS1
+    # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
+    sim_memory = dict()
+
+    # pre-set what is in the memory
+    sim_memory[500] = 0x37
+    sim_memory[501] = 0xBF
+
+
+    while (1):
+        action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
+        await Timer(1, unit="ps") #looking for the values which are held for 3 cycles
+        # there seems to be a race condition somewhere, but the values should be held for 3 cycles
+        # so idk man Im just gonna leave this wait here
+
+        if (dut.nCS1_o.value == 0): #if chip one is selected
+
+            if (dut.nCS2_o.value == 0):
+                print(" ! ERROR: MEM1: Both chip select values are high")
+
+            if (action == FallingEdge(dut.nWE_o)): #WRITE
+                await Timer(85, unit="ns")
+                sim_memory[int(dut.addr_o.value)] = dut.data_o.value
+
+            else: # READ
+                dut.data_i.value = 0xbd #bad data value. If you see this in output, there's an error in timing
+                if (int(dut.addr_o.value) in sim_memory.keys()):
+                    await Timer(85, unit="ns")
+                    dut.data_i.value = sim_memory[int(dut.addr_o.value)]
+                else:
+                    # print(" ! ERROR: MEM1: Attempted to access nonexistent memory address", int(dut.addr_o.value))
+                    dut.data_i.value = 0x00
+
+async def external_mem2(dut):    # simulated external memory 2
+    #dictionary to simulate specified addresses
+    # look for low nCS2
+    # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
+    sim_memory2 = dict()
+
+    while (1):
+        action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
+        await Timer(1, unit="ps") #looking for the values which are held for 3 cycles
+        # there seems to be a race condition somewhere, but the values should be held for 3 cycles
+        # so idk man Im just gonna leave this wait here
+
+        if (dut.nCS2_o.value == 0): #if chip two is selected
+
+            if (dut.nCS1_o.value == 0):
+                print(" ! ERROR: MEM2: Both chip select values are high")
+
+            if (action == FallingEdge(dut.nWE_o)): #WRITE
+                await Timer(85, unit="ns")
+                sim_memory2[int(dut.addr_o.value)] = dut.data_o.value
+            elif (action == FallingEdge(dut.nOE_o)): # READ
+                dut.data_i.value = 0xbd #bad data value. If you see this in output, there's an error in timing
+                if (int(dut.addr_o.value) in sim_memory2.keys()):
+                    await Timer(85, unit="ns")
+                    dut.data_i.value = sim_memory2[int(dut.addr_o.value)]
+                else:
+                    # print(" ! ERROR: MEM2: Attempted to access nonexistent memory address", int(dut.addr_o.value))
+                    dut.data_i.value = 0x00
 
 # tests ===================================================
 @cocotb.test()
@@ -34,6 +110,13 @@ async def reset_test(dut):
 
     # cocotb.start_soon(generate_clock(dut))
     cocotb.start_soon(generate_clk_and_reset(dut, 500000))
+    cocotb.start_soon(external_mem1(dut))
+    cocotb.start_soon(external_mem2(dut))
+
+    # set values to zero
+    dut.waddr_i.value = 0
+    dut.wdata_i.value = 0
+    dut.data_i.value = 0xee
 
     await FallingEdge(dut.reset)
 
