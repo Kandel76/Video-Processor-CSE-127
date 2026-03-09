@@ -68,7 +68,7 @@ module scan_controller #(
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        state1_q       <= IDLE;
+        state_q       <= IDLE;
         row_cnt_q     <= 0;
         step_cnt_q    <= 0;
         timeout_cnt_q <= 0;
@@ -102,7 +102,7 @@ end
         pixel_row   = row_cnt_q;
         pixel_col   = step_cnt_q * ADC_BANKS;
         line_done    = 0;
-        pixel_valid_d = pixel_valid_q
+        pixel_valid_d = pixel_valid_q;
         case (state_q)
             IDLE: begin
                 //wait for a flag to start the next frame
