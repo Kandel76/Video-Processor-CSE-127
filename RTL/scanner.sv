@@ -6,27 +6,36 @@ module scan_controller #(
     parameter int PIXEL_BUS_WIDTH = DATA_BITS * (COLS / ADC_BANKS), //total bits read from ADC each step
     parameter int ADC_TIMEOUT_CYCLES = 20
 )(
-    //inputs
+
     input logic clk,
     input logic rst_n,   //ACTIVE LOW
+    
+
+    //From the ADC Module
     input logic adc_done,   //signals when all ADC conversions for the current step are done
     input logic integration_done, //signals when pixel integration time is complete
     input logic [(DATA_BITS*ADC_BANKS)-1:0] adc_data,  //data from the ADC 
     input logic pixel_ready,  //ready signal from array, pixel data can be used
-    input logic frame_start, //FOR ANOTHER MODULE to start a new frame (later used to frame rate control)
-    
-    //outputs
-    output logic                              frame_done,  //signals when the entire fram is complete
-    output logic                              line_done, //signal end of a row
+
+    //To the ADC Module
     output logic [ROWS-1:0]                   row_enable,    //should this be one hot or indexed for row_en?
     output logic [$clog2(ADC_BANKS)-1:0]      bank_sel, //which bank to start conversion on
-    output logic                              adc_start, //start conversion for the specifc adc
-    output logic [(DATA_BITS*ADC_BANKS)-1:0]    pixel_data, 
     output logic [$clog2(ROWS)-1:0]           pixel_row, //current row being output -- used for mapping to pixel array
     output logic [$clog2(COLS)-1:0]           pixel_col, //current col being output -- used for mapping to pixel array
-    output logic                              pixel_valid,  //used later for mapping
-    output logic                              pixel_reset, //global reset for pixels at the start of each frame
     output logic                              integrate //signal to start integration time for pixels
+    output logic                              adc_start, //start conversion for the specifc adc
+    output logic                              pixel_reset, //global reset for pixels at the start of each frame
+
+
+    //For memory mapping and control
+    input logic frame_start, //FOR ANOTHER MODULE to start a new frame (later used to frame rate control)
+    output logic                              pixel_valid,  //used later for mapping
+    output logic                              line_done, //signal end of a row
+    output logic                              frame_done,  //signals when the entire fram is complete
+    output logic [(DATA_BITS*ADC_BANKS)-1:0]    pixel_data, 
+    
+    
+   
 );
     
     localparam int STEPS_PER_ROW = COLS / (ADC_BANKS);  //strides
