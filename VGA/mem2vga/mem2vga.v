@@ -41,8 +41,7 @@ module mem2vga
     wire [0:0] newline_w;
 
     //addressing
-    logic [17:0] small_pix_addr;    //pixel address for VGA
-    logic [15:0] big_pix_addr;      //pixel address for diodes
+    logic [16:0] big_pix_addr;      //pixel address for diodes
     logic [0:0] odd_row_w;
     wire [1:0] quadrant_w;
 
@@ -77,13 +76,11 @@ module mem2vga
 
     always @(posedge clk) begin
         if (reset) begin
-            small_pix_addr <= 0;
             big_pix_addr <= 0;
         end else if (active_area) begin
-            if (quadrant_w[0]) begin // big pixel every other pixel
+            if (xpos[0]) begin // big pixel every other pixel
                 big_pix_addr <= big_pix_addr + 1;
             end
-            small_pix_addr <= small_pix_addr + 1;
         end else if ((xpos == 641) & (~odd_row_w)) begin
             big_pix_addr <= big_pix_addr - 320;
         end
@@ -118,7 +115,25 @@ module mem2vga
     );
 
     // Double Buffer ================================================
-    // its own module
+    wire [3:0] buf_data_o;
+    double_buffer the_double_buffer (
+        .clk(clk),
+        .reset(reset),
+
+        //pixel state
+        .big_pix_addr(big_pix_addr),
+        .newline(newline_w),
+        .endline(endline_w),
+        .active_area(active_area),
+
+        //memory side
+        .mem_rdata(mem_rdata_o),
+        .mem_rvalid(mem_rvalid_o),
+        .mem_raddr(mem_raddr_i),
+
+        //output side
+        .buf_data_o(buf_data_o)
+    );
     
     //VGA Output ====================================================
     assign pixel_o = {3{(brightness_w & {4{active_o}})}};
