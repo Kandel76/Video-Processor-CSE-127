@@ -5,7 +5,46 @@ from cocotb.triggers import FallingEdge, Timer, RisingEdge, First
 import logging
 
 
-# helpers =================================================
+# Preset simulated memory =====================================================
+sim_memory = dict()
+sim_memory2 = dict()
+# pre-set what is in the external memory ==================================
+with open("images/Kitty.bmp", "rb") as dafile:
+    for _ in range (122):
+        byte = dafile.read(1)
+    
+    byte1 = dafile.read(1)
+    iterator = 0
+    while ((byte1 != b"") & (iterator < 32768)):
+        byte2 = dafile.read(1)
+        byte2 = dafile.read(1)
+        byte2 = dafile.read(1)
+
+        sim_memory[iterator] = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
+
+        byte1 = dafile.read(1)
+        byte1 = dafile.read(1)
+        byte1 = dafile.read(1)
+        iterator = iterator + 1
+
+    print("finished writing memory 1")
+
+    iterator = 0
+    while (byte1 != b""):
+        print("Writing memory 2, iterator is", iterator)
+        byte2 = dafile.read(1)
+        byte2 = dafile.read(1)
+        byte2 = dafile.read(1)
+
+        sim_memory2[iterator] = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
+
+        byte1 = dafile.read(1)
+        byte1 = dafile.read(1)
+        byte1 = dafile.read(1)
+        iterator = iterator + 1
+
+
+# helpers =====================================================================
 async def generate_clock(dut, NUMCYCLES=200):
     # generate 25MHz clk
 
@@ -29,7 +68,7 @@ async def generate_clk_and_reset(dut, NUMCYCLES=200, BEFORE=2, DURING=3):
         await FallingEdge(dut.clk)
     dut.reset.value = 0
 
-# memory helpers ====================================================
+# memory helpers ==============================================================
 async def mem_access(dut, DATA=0xe0): # going to depreciate this
     dut.valid_i.value=0
 
@@ -44,28 +83,8 @@ async def external_mem1(dut):    # simulated external memory 1
     #dictionary to simulate specified addresses
     # look for low nCS1
     # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
-    sim_memory = dict()
+    # sim_memory = dict()
 
-    # pre-set what is in the external memory ============================================
-    with open("images/Kitty.bmp", "rb") as dafile:
-        for _ in range (122):
-            byte = dafile.read(1)
-        
-        byte1 = dafile.read(1)
-        iterator = 0
-        while (byte1 != b""):
-            byte2 = dafile.read(1)
-            byte2 = dafile.read(1)
-            byte2 = dafile.read(1)
-
-            sim_memory[iterator] = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
-
-            byte1 = dafile.read(1)
-            byte1 = dafile.read(1)
-            byte1 = dafile.read(1)
-            iterator = iterator + 1
-
-    print("finished writing memory 1")
 
     # # Steve
     # sim_memory[int((160*10)+30)] = 0x88
@@ -139,13 +158,7 @@ async def external_mem2(dut):    # simulated external memory 2
     #dictionary to simulate specified addresses
     # look for low nCS2
     # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
-    sim_memory2 = dict()
-
-
-    # pre-set what is in the external memory ============================================
-    sim_memory2[int(0)] = 0x88
-    sim_memory2[int(160)] = 0x88
-    sim_memory2[int(160)] = 0x88
+    # sim_memory2 = dict()
 
     while (1):
         action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
@@ -167,7 +180,7 @@ async def external_mem2(dut):    # simulated external memory 2
                     await Timer(85, unit="ns")
                     dut.data_i.value = sim_memory2[int(dut.addr_o.value)]
                 else:
-                    # print(" ! ERROR: MEM2: Attempted to access nonexistent memory address", int(dut.addr_o.value))
+                    print(" ! ERROR: MEM2: Attempted to access nonexistent memory address", int(dut.addr_o.value))
                     dut.data_i.value = 0x24
 
 # tests ===================================================
