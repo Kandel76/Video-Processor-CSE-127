@@ -47,45 +47,66 @@ async def external_mem1(dut):    # simulated external memory 1
     sim_memory = dict()
 
     # pre-set what is in the external memory ============================================
-    sim_memory[int((160*10)+30)] = 0x88
-    sim_memory[int((160*10)+31)] = 0x22
-    sim_memory[int((160*10)+32)] = 0x22
-    sim_memory[int((160*10)+33)] = 0x88
+    with open("images/Kitty.bmp", "rb") as dafile:
+        for _ in range (122):
+            byte = dafile.read(1)
+        
+        byte1 = dafile.read(1)
+        iterator = 0
+        while (byte1 != b""):
+            byte2 = dafile.read(1)
+            byte2 = dafile.read(1)
+            byte2 = dafile.read(1)
 
-    sim_memory[int((160*11)+30+1)] = 0x88
-    sim_memory[int((160*11)+31+1)] = 0x26
-    sim_memory[int((160*11)+32+1)] = 0x62
-    sim_memory[int((160*11)+33+1)] = 0x88
+            sim_memory[iterator] = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
 
-    sim_memory[int((160*12)+30)] = 0x88
-    sim_memory[int((160*12)+31)] = 0x84
-    sim_memory[int((160*12)+32)] = 0x48
-    sim_memory[int((160*12)+33)] = 0x88
+            byte1 = dafile.read(1)
+            byte1 = dafile.read(1)
+            byte1 = dafile.read(1)
+            iterator = iterator + 1
 
-    sim_memory[int((160*13)+30)] = 0x8F
-    sim_memory[int((160*13)+31)] = 0x08
-    sim_memory[int((160*13)+32)] = 0x80
-    sim_memory[int((160*13)+33)] = 0xF8
+    print("finished writing memory 1")
 
-    sim_memory[int((160*14)+30+1)] = 0x88
-    sim_memory[int((160*14)+31+1)] = 0x88
-    sim_memory[int((160*14)+32+1)] = 0x88
-    sim_memory[int((160*14)+33+1)] = 0x88
+    # # Steve
+    # sim_memory[int((160*10)+30)] = 0x88
+    # sim_memory[int((160*10)+31)] = 0x22
+    # sim_memory[int((160*10)+32)] = 0x22
+    # sim_memory[int((160*10)+33)] = 0x88
 
-    sim_memory[int((160*15)+30)] = 0x28
-    sim_memory[int((160*15)+31)] = 0x88
-    sim_memory[int((160*15)+32)] = 0x88
-    sim_memory[int((160*15)+33)] = 0x82
+    # sim_memory[int((160*11)+30)] = 0x88
+    # sim_memory[int((160*11)+31)] = 0x26
+    # sim_memory[int((160*11)+32)] = 0x62
+    # sim_memory[int((160*11)+33)] = 0x88
 
-    sim_memory[int((160*16)+30)] = 0x22
-    sim_memory[int((160*16)+31)] = 0x22
-    sim_memory[int((160*16)+32)] = 0x22
-    sim_memory[int((160*16)+33)] = 0x22
+    # sim_memory[int((160*12)+30)] = 0x88
+    # sim_memory[int((160*12)+31)] = 0x84
+    # sim_memory[int((160*12)+32)] = 0x48
+    # sim_memory[int((160*12)+33)] = 0x88
 
-    sim_memory[int((160*17)+30+1)] = 0x22
-    sim_memory[int((160*17)+31+1)] = 0x22
-    sim_memory[int((160*17)+32+1)] = 0x22
-    sim_memory[int((160*17)+33+1)] = 0x22
+    # sim_memory[int((160*13)+30)] = 0x8F
+    # sim_memory[int((160*13)+31)] = 0x08
+    # sim_memory[int((160*13)+32)] = 0x80
+    # sim_memory[int((160*13)+33)] = 0xF8
+
+    # sim_memory[int((160*14)+30)] = 0x88
+    # sim_memory[int((160*14)+31)] = 0x88
+    # sim_memory[int((160*14)+32)] = 0x88
+    # sim_memory[int((160*14)+33)] = 0x88
+
+    # sim_memory[int((160*15)+30)] = 0x28
+    # sim_memory[int((160*15)+31)] = 0x88
+    # sim_memory[int((160*15)+32)] = 0x88
+    # sim_memory[int((160*15)+33)] = 0x82
+
+    # sim_memory[int((160*16)+30)] = 0x22
+    # sim_memory[int((160*16)+31)] = 0x22
+    # sim_memory[int((160*16)+32)] = 0x22
+    # sim_memory[int((160*16)+33)] = 0x22
+
+    # sim_memory[int((160*17)+30)] = 0x22
+    # sim_memory[int((160*17)+31)] = 0x22
+    # sim_memory[int((160*17)+32)] = 0x22
+    # sim_memory[int((160*17)+33)] = 0x22
 
 
     while (1):
@@ -110,13 +131,21 @@ async def external_mem1(dut):    # simulated external memory 1
                     dut.data_i.value = sim_memory[int(dut.addr_o.value)]
                 else:
                     # print(" ! ERROR: MEM1: Attempted to access nonexistent memory address", int(dut.addr_o.value))
-                    dut.data_i.value = 0x00
+                    dut.data_i.value = 0xEE
+
+
 
 async def external_mem2(dut):    # simulated external memory 2
     #dictionary to simulate specified addresses
     # look for low nCS2
     # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
     sim_memory2 = dict()
+
+
+    # pre-set what is in the external memory ============================================
+    sim_memory2[int(0)] = 0x88
+    sim_memory2[int(160)] = 0x88
+    sim_memory2[int(160)] = 0x88
 
     while (1):
         action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
@@ -139,7 +168,7 @@ async def external_mem2(dut):    # simulated external memory 2
                     dut.data_i.value = sim_memory2[int(dut.addr_o.value)]
                 else:
                     # print(" ! ERROR: MEM2: Attempted to access nonexistent memory address", int(dut.addr_o.value))
-                    dut.data_i.value = 0x00
+                    dut.data_i.value = 0x24
 
 # tests ===================================================
 @cocotb.test()
@@ -157,9 +186,8 @@ async def reset_test(dut):
 
     await FallingEdge(dut.reset)
 
-
     with open("frame.bmp", "wb") as f:
-        # construct bmp header
+        # construct bmp header for 24 bit color depth, 640x480p
         # 0-7
         array=bytearray([0x42, 0x4D, 0x36, 0x6C, 0x00, 0x00, 0x00, 0x00])
         f.write(array)

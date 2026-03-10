@@ -175,7 +175,7 @@ module double_buffer (
             // if odd  row, read buf 2 write buf 1
             buf1_addr_w = wbuf_addr_r;
             buf1_gwen_w = 0;
-            buf1_wen_w = {8{~sixth_l && (wbuf_addr_r < 160)}};
+            buf1_wen_w = {8{sixth_l && (wbuf_addr_r < 160)}};
             buf1_wdata_w = mem_rdata;
 
             buf2_addr_w = rbuf_addr;
@@ -187,7 +187,7 @@ module double_buffer (
             // if even row, read buf 1 write buf 2
             buf2_addr_w = wbuf_addr_r;
             buf2_gwen_w = 0;
-            buf2_wen_w = {8{~sixth_l && (wbuf_addr_r < 160)}};
+            buf2_wen_w = {8{sixth_l && (wbuf_addr_r < 160)}};
             buf2_wdata_w = mem_rdata;
 
             buf1_addr_w = rbuf_addr;
