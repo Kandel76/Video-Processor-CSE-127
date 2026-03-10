@@ -5,11 +5,15 @@ from cocotb.triggers import FallingEdge, Timer, RisingEdge, First
 import logging
 
 
-# Preset simulated memory =====================================================
+# Pre-set simulated memory =====================================================
+imagefolder = "images/"
+imagefile = "Kitty.bmp" # Set this to the name of the 320x240 bmp image file to use as input.
+
+imagepath = imagefolder + imagefile
+print("image file: <", imagepath, ">")
 sim_memory = dict()
 sim_memory2 = dict()
-# pre-set what is in the external memory ==================================
-with open("images/Kitty.bmp", "rb") as dafile:
+with open(imagepath, "rb") as dafile:
     for _ in range (122):
         byte = dafile.read(1)
     
@@ -31,7 +35,6 @@ with open("images/Kitty.bmp", "rb") as dafile:
 
     iterator = 0
     while (byte1 != b""):
-        print("Writing memory 2, iterator is", iterator)
         byte2 = dafile.read(1)
         byte2 = dafile.read(1)
         byte2 = dafile.read(1)
