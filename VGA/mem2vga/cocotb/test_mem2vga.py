@@ -202,7 +202,7 @@ async def reset_test(dut):
 
     await FallingEdge(dut.reset)
 
-    with open("frame.bmp", "wb") as f:
+    with open("vga_out.bmp", "wb") as f:
         # construct bmp header for 24 bit color depth, 640x480p
         # 0-7
         array=bytearray([0x42, 0x4D, 0x36, 0x6C, 0x00, 0x00, 0x00, 0x00])
