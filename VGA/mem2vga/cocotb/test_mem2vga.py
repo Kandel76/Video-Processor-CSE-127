@@ -13,6 +13,8 @@ imagepath = imagefolder + imagefile
 print("image file: <", imagepath, ">")
 sim_memory = dict()
 sim_memory2 = dict()
+
+# Write image data into memory
 with open(imagepath, "rb") as dafile:
     for _ in range (122):
         byte = dafile.read(1)
@@ -20,11 +22,18 @@ with open(imagepath, "rb") as dafile:
     byte1 = dafile.read(1)
     iterator = 0
     while ((byte1 != b"") & (iterator < 32768)):
+        # perform the read 3 times, once for each color channel
+        # this method means only the red color channel is being read
+        # which should be fine
         byte2 = dafile.read(1)
         byte2 = dafile.read(1)
         byte2 = dafile.read(1)
 
+        # turn bytes into hex and then write to memory
+        # {upper4, 4'b0000} | {4'b000, lower4}
         sim_memory[iterator] = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
+        if ((iterator < 10) | (120 < iterator < 130)):
+            print("address:", hex(iterator), "contains", hex(sim_memory[iterator]))
 
         byte1 = dafile.read(1)
         byte1 = dafile.read(1)
@@ -86,50 +95,6 @@ async def external_mem1(dut):    # simulated external memory 1
     #dictionary to simulate specified addresses
     # look for low nCS1
     # TODO note: ***THIS DOES NOT PRECISELY CHECK THE TIMINGS***
-    # sim_memory = dict()
-
-
-    # # Steve
-    # sim_memory[int((160*10)+30)] = 0x88
-    # sim_memory[int((160*10)+31)] = 0x22
-    # sim_memory[int((160*10)+32)] = 0x22
-    # sim_memory[int((160*10)+33)] = 0x88
-
-    # sim_memory[int((160*11)+30)] = 0x88
-    # sim_memory[int((160*11)+31)] = 0x26
-    # sim_memory[int((160*11)+32)] = 0x62
-    # sim_memory[int((160*11)+33)] = 0x88
-
-    # sim_memory[int((160*12)+30)] = 0x88
-    # sim_memory[int((160*12)+31)] = 0x84
-    # sim_memory[int((160*12)+32)] = 0x48
-    # sim_memory[int((160*12)+33)] = 0x88
-
-    # sim_memory[int((160*13)+30)] = 0x8F
-    # sim_memory[int((160*13)+31)] = 0x08
-    # sim_memory[int((160*13)+32)] = 0x80
-    # sim_memory[int((160*13)+33)] = 0xF8
-
-    # sim_memory[int((160*14)+30)] = 0x88
-    # sim_memory[int((160*14)+31)] = 0x88
-    # sim_memory[int((160*14)+32)] = 0x88
-    # sim_memory[int((160*14)+33)] = 0x88
-
-    # sim_memory[int((160*15)+30)] = 0x28
-    # sim_memory[int((160*15)+31)] = 0x88
-    # sim_memory[int((160*15)+32)] = 0x88
-    # sim_memory[int((160*15)+33)] = 0x82
-
-    # sim_memory[int((160*16)+30)] = 0x22
-    # sim_memory[int((160*16)+31)] = 0x22
-    # sim_memory[int((160*16)+32)] = 0x22
-    # sim_memory[int((160*16)+33)] = 0x22
-
-    # sim_memory[int((160*17)+30)] = 0x22
-    # sim_memory[int((160*17)+31)] = 0x22
-    # sim_memory[int((160*17)+32)] = 0x22
-    # sim_memory[int((160*17)+33)] = 0x22
-
 
     while (1):
         action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
