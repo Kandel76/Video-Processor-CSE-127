@@ -17,30 +17,20 @@ module sar_adc (
 typedef enum logic [2:0]{
     IDLE        =3'd0,  //Scan controller is off
     VIN_HOLD    =3'd1, //hold the diode voltage for a cycle before transitioning and setup the adc,
-    CODE_SEND   =3'd2, //give the dac the 4-bit code
-    COMPARE     =3'd3, //compares returned bit with test vit
-    CODE_STORE  =3'd4 //after 4 iterations we get here, store the code and move back to idle/
+    COLD_HOLD   =3'd2, //hold code to allow PWM signal to settle
+    CODE_UPDATE =3'd3, //checks comparator and decides whether to continue ramp
+    CODE_STORE  =3'd4 //store the code and move back to idle
 
 } adc_fsm;
 
 adc_fsm state, state_n; 
-//4-bit code, tells us the photodiode expected voltage
+//4-bit code, tells us the photodiode expected voltage (internal adc_o)
 logic [3:0] adc_code; 
 
-logic [1:0] bit_index; 
-//Will need a counter to wait a few cycles
+//Will need a counter to wait a few cycles (this will end up being the pwms sample rate)
 logic [5:0] hold, code_hold;
-logic [0:0] dac_code_sent; 
-//counter to keep track of comparison cycle
-logic [1:0] comp_cycle;
-//keep track of diode
-logic [7:0] diode_row;
-//Store the DAC code
-logic [3:0] adc_dac_o;
-
-
-// DAC needs code same cycle, so it needs to be outside always blocks.
-assign adc_dac_o = (state == CODE_SEND) ? (adc_code | (4'b1 << bit_index)) : adc_code;
+localparam logic [5:0] HOLD_CYCLES   = 6'd6;
+localparam logic [5:0] SETTLE_CYCLES = 6'd32;
 
 //FSM state logic
 always_comb begin
@@ -53,20 +43,21 @@ always_comb begin
             else begin 
                 state_n = IDLE; 
             end
-        //this state should wait 6 cycles
-        VIN_HOLD: if (hold[2] && hold[1]) begin 
-            state_n = CODE_SEND; 
+        //this state waits HOLD_CYCLES cycles to allow signal to propagate through chip
+        VIN_HOLD: if (hold == (HOLD_CYCLES - 6'd1)) begin 
+            state_n = COLD_HOLD; 
             end
-        //we may find ourselves waiting here for longer than expected.
-        CODE_SEND: if (code_hold[5]) begin 
-            state_n = COMPARE;
+        //wait SETTLE_CYCLES cycles before sampling comparator
+        COLD_HOLD: if (code_hold == (SETTLE_CYCLES - 6'd1)) begin 
+            state_n = CODE_UPDATE;
         end
 
-        COMPARE: if (comp_cycle == 2'b11) begin 
+        // With this new pwm logic, we now exit whenever the comp returns a 0, or we've reached the the final code possible
+        CODE_UPDATE: if ((cmp_o == 1'b0) || (adc_code == 4'hF)) begin
             state_n = CODE_STORE; 
         end
         else begin 
-            state_n = CODE_SEND; 
+            state_n = COLD_HOLD; 
         end
         CODE_STORE: state_n = IDLE; 
     default: state_n = IDLE; 
@@ -78,61 +69,47 @@ always_ff @(posedge adc_clk) begin
     state <= state_n;
     if (reset_signal) begin 
         adc_code <= '0;
-        //mux bit will also be all zeros
-        //should set back to the MSB
-        comp_cycle <= '0;  
-        dac_code_sent <= '0; 
         hold <= '0; 
         code_hold <= '0; 
-        bit_index <= 2'b11; 
         state <= IDLE;  
-        diode_row <= 8'b00000001; 
         adc_done <= 1'b0;
         hold_signal <= 1'b0;
+        adc_o <= '0;
     end
     else if (state == IDLE) begin 
         adc_code <= '0; 
-        comp_cycle <= '0; 
-        dac_code_sent <= '0;
         hold <= '0; 
         code_hold <= '0;
-        bit_index <= 2'b11;
         adc_done <= 1'b0;
         hold_signal <= 1'b0;
     end
+    //we want the hold_signal to be high until we are done with the code generation
     else if (state == VIN_HOLD) begin 
-        if (state_n == CODE_SEND) begin 
+        if (state_n == COLD_HOLD) begin 
             hold <= 0; 
-            hold_signal <= 1'b0;
         end
         else begin 
             hold <= hold + 1; 
             hold_signal <= 1'b1;
         end
     end
-    else if (state == CODE_SEND) begin 
-        //comp will get code here (no comp module nowhere to sound as of now)
-        if (state_n == COMPARE) begin 
+    else if (state == COLD_HOLD) begin 
+        //comp will get code here (remains unconnected)
+        if (state_n == CODE_UPDATE) begin 
             code_hold <= 0; 
         end
         else begin 
             code_hold <= code_hold + 1; 
         end
-        adc_code[bit_index] <= 1'b1;
     end
-    else if (state == COMPARE) begin 
-        if (cmp_o == 1) begin 
-            adc_code[bit_index] <= 1'b1; 
+    else if (state == CODE_UPDATE) begin 
+        // We now incrmement our code until cmp_o returns a 0
+        if ((cmp_o == 1'b1) && (adc_code != 4'hF)) begin
+            adc_code <= adc_code + 1'b1;
         end
-        else begin 
-            adc_code[bit_index] <= 1'b0; 
-        end
-        bit_index <= bit_index - 1; 
-        comp_cycle <= comp_cycle + 1; 
     end
     if (state == CODE_STORE) begin 
         adc_o <= adc_code; 
-        diode_row <= diode_row + 1;
         adc_done <= 1'b1;  
     end
 end 
