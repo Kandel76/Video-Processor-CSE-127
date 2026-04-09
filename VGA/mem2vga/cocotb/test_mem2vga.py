@@ -7,7 +7,7 @@ import logging
 
 # Pre-set simulated memory =====================================================
 imagefolder = "images/"
-imagefile = "Kitty.bmp" # Set this to the name of the 320x240 bmp image file to use as input.
+imagefile = "blackgreywhite.bmp" # Set this to the name of the 320x240 bmp image file to use as input.
 
 imagepath = imagefolder + imagefile
 print("image file: <", imagepath, ">")

@@ -57,10 +57,10 @@ module mem2vga
     //assign brightness_w = {2{ypos[1:0]}};
     //assign brightness_w = {quadrant_w, 2'b00};
     //assign brightness_w = endline_w ? 4'hf: 4'h8;
-    assign brightness_w = buf_data_o;
 
     // Real assignments =============================================
     assign active_o = active_area;
+    assign brightness_w = buf_data_o;
 
     assign endline_w = (xpos == 641) & (odd_row_w);     //Used to switch double buffer
     assign newline_w = (xpos == 0) & (odd_row_w);       //Used to synchronize double buffer signals
