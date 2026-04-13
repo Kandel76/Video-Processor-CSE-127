@@ -63,7 +63,7 @@ module mem2vga
     assign brightness_w = buf_data_o;
 
     assign endline_w = (xpos == 641) & (odd_row_w);     //Used to switch double buffer
-    assign newline_w = (xpos == 0) & (odd_row_w);       //Used to synchronize double buffer signals
+    assign newline_w = (xpos == 0) & (~odd_row_w);       //Used to synchronize double buffer signals
 
     // Determine pixel address ======================================
 

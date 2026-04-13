@@ -120,7 +120,8 @@ module double_buffer (
 
     always @(*) begin
         if (newline) begin
-            mem_raddr_n = pix_mem_w + 16'd160;
+            mem_raddr_n = pix_mem_w + 16'd163;
+            //added an extra 3 to account for buffers on the data path
         end else if (sixth_l && (wbuf_addr_r < 160)) begin
             mem_raddr_n = mem_raddr_r + 1;
         end else begin

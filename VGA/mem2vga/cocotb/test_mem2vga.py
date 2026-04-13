@@ -4,13 +4,19 @@ import cocotb
 from cocotb.triggers import FallingEdge, Timer, RisingEdge, First
 import logging
 
+# Simulation settings
+do_second_frame = False
+
 
 # Pre-set simulated memory =====================================================
+# set these values for the filepath to the bmp image file to read in from
+# the image must be a 320x240p file in the .bmp format with 8 bit color depth
 imagefolder = "images/"
-imagefile = "blackgreywhite.bmp" # Set this to the name of the 320x240 bmp image file to use as input.
+imagefile = "Kitty.bmp" # Set this to the name of the 320x240 bmp image file to use as input.
 
 imagepath = imagefolder + imagefile
 print("image file: <", imagepath, ">")
+
 sim_memory = dict()
 sim_memory2 = dict()
 
@@ -39,6 +45,12 @@ with open(imagepath, "rb") as dafile:
         byte1 = dafile.read(1)
         byte1 = dafile.read(1)
         iterator = iterator + 1
+
+    # print("Manually inserting values to mem1")
+    # sim_memory[160] = 0x99
+    # sim_memory[161] = 0x88
+    # sim_memory[162] = 0x7e
+    # sim_memory[163] = 0x66
 
     print("finished writing memory 1")
 
@@ -100,7 +112,9 @@ async def external_mem1(dut):    # simulated external memory 1
         action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
         await Timer(1, unit="ps") #looking for the values which are held for 3 cycles
         # there seems to be a race condition somewhere, but the values should be held for 3 cycles
-        # so idk man Im just gonna leave this wait here
+        # This picosecond wait is just to make sure that we are acting after the detected edge rather
+        # than before. It could be that the simulator internally updates the nWE and nOE values
+        # before the nCS1_o values, even though they both change on the same clock edge.
 
         if (dut.nCS1_o.value == 0): #if chip one is selected
 
@@ -132,7 +146,6 @@ async def external_mem2(dut):    # simulated external memory 2
         action = await First(FallingEdge(dut.nWE_o), FallingEdge(dut.nOE_o)) # wait for a read or write to start
         await Timer(1, unit="ps") #looking for the values which are held for 3 cycles
         # there seems to be a race condition somewhere, but the values should be held for 3 cycles
-        # so idk man Im just gonna leave this wait here
 
         if (dut.nCS2_o.value == 0): #if chip two is selected
 
@@ -191,22 +204,61 @@ async def reset_test(dut):
         array=bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
         f.write(array)
 
-        await FallingEdge(dut.clk)
-        await FallingEdge(dut.clk)
-        await FallingEdge(dut.clk)
-        await FallingEdge(dut.clk)
-        await FallingEdge(dut.clk)
-        await FallingEdge(dut.clk)
+        # await FallingEdge(dut.clk)
+        # await FallingEdge(dut.clk)
+        # await FallingEdge(dut.clk)
+        # await FallingEdge(dut.clk)
+        # await FallingEdge(dut.clk)
+        # await FallingEdge(dut.clk)
 
         #BMP does pixels bottom to top, left to right
 
         for j in range(479, -1, -1): 
+            await RisingEdge(dut.active_o)
             for i in range (639, -1, -1):
-                # if (dut.active_o.value == 0):
-                #     await RisingEdge(dut.active_o)
                 await FallingEdge(dut.clk)
-                while (dut.active_o.value == 0):
-                    await FallingEdge(dut.clk)
+                await Timer(1, unit="ps") #looking for the values which are held for 3 cycles
                 byte = (int(dut.pixel_o.value) & 0x0F0)
 
                 f.write(bytearray([byte, byte, byte]))
+
+    if (do_second_frame):
+        with open("vga_out_2.bmp", "wb") as f:
+            # construct bmp header for 24 bit color depth, 640x480p
+            # 0-7
+            array=bytearray([0x42, 0x4D, 0x36, 0x6C, 0x00, 0x00, 0x00, 0x00])
+            f.write(array)
+            # 8-15
+            array=bytearray([0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00])
+            f.write(array)
+            # 16-23
+            array=bytearray([0x00, 0x00, 0x80, 0x02, 0x00, 0x00, 0xE0, 0x01])
+            f.write(array)
+            # 24-31
+            array=bytearray([0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00])
+            f.write(array)
+            # 32-39
+            array=bytearray([0x00, 0x00, 0x00, 0x6C, 0x09, 0x00, 0x13, 0x0B])
+            f.write(array)
+            # 40-47
+            array=bytearray([0x00, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x00, 0x00])
+            f.write(array)
+            # 48-53
+            array=bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+            f.write(array)
+
+            for _ in range(525-480): #wait out vertical porches
+                await FallingEdge(dut.clk)
+
+            #BMP does pixels bottom to top, left to right
+
+            for j in range(479, -1, -1): 
+                for i in range (639, -1, -1):
+                    # if (dut.active_o.value == 0):
+                    #     await RisingEdge(dut.active_o)
+                    await FallingEdge(dut.clk)
+                    while (dut.active_o.value == 0):
+                        await FallingEdge(dut.clk)
+                    byte = (int(dut.pixel_o.value) & 0x0F0)
+
+                    f.write(bytearray([byte, byte, byte]))
