@@ -1,21 +1,26 @@
-//this design assumes adc outputs 1 code at a time
+//this design assumes adc outputs 1 code at a time (320 adcs)
 module sar_adc (
+    //global clk
     input logic [0:0] adc_clk,
-    //once comparator is integrated, this wont be an input
+    //comparator input
     input logic [0:0] cmp_o,
+    //from the scan controller
     input logic [0:0] read_en,
+    //global reset
     input logic [0:0] reset_signal,
-    //should then tell us which diode to choose based on a mux design
+    //app diode voltage
     output logic [3:0] adc_o,
     //This will ensure photodiode voltage is captured and tested without changes
-    //currently still unsure on how this signal will be generated on chip.
     output logic [0:0] hold_signal,
-    output logic [0:0] adc_done
+    //send to scan controller
+    output logic [0:0] adc_done,
+    //tells scan controller ready to scan,
+    output logic [0:0] adc_ready
     
 );
 //Some states exist to allow for appropiate timing
 typedef enum logic [2:0]{
-    IDLE        =3'd0,  //Scan controller is off
+    IDLE        =3'd0,  //Scan controller is off (completed scan)
     VIN_HOLD    =3'd1, //hold the diode voltage for a cycle before transitioning and setup the adc,
     COLD_HOLD   =3'd2, //hold code to allow PWM signal to settle
     CODE_UPDATE =3'd3, //checks comparator and decides whether to continue ramp
@@ -28,13 +33,14 @@ adc_fsm state, state_n;
 logic [3:0] adc_code; 
 
 //Will need a counter to wait a few cycles (this will end up being the pwms sample rate)
+//for now fixed params for testing 
 logic [5:0] hold, code_hold;
 localparam logic [5:0] HOLD_CYCLES   = 6'd6;
 localparam logic [5:0] SETTLE_CYCLES = 6'd32;
 
 //FSM state logic
 always_comb begin
-    state_n = state; 
+    state_n = state;
     case (state)
 
         IDLE: if (read_en) begin 
@@ -43,7 +49,7 @@ always_comb begin
             else begin 
                 state_n = IDLE; 
             end
-        //this state waits HOLD_CYCLES cycles to allow signal to propagate through chip
+        //this state waits HOLD_CYCLES cycles to allow signal to propagate through chip (diode charge)
         VIN_HOLD: if (hold == (HOLD_CYCLES - 6'd1)) begin 
             state_n = COLD_HOLD; 
             end
@@ -75,16 +81,19 @@ always_ff @(posedge adc_clk) begin
         adc_done <= 1'b0;
         hold_signal <= 1'b0;
         adc_o <= '0;
+        adc_ready <= 1'b0;
     end
     else if (state == IDLE) begin 
         adc_code <= '0; 
         hold <= '0; 
         code_hold <= '0;
-        adc_done <= 1'b0;
         hold_signal <= 1'b0;
+        adc_ready <= 1'b1;
+        adc_done <= 1'b0;
     end
     //we want the hold_signal to be high until we are done with the code generation
-    else if (state == VIN_HOLD) begin 
+    else if (state == VIN_HOLD) begin  
+        adc_ready <= 1'b0;
         if (state_n == COLD_HOLD) begin 
             hold <= 0; 
         end
@@ -94,7 +103,9 @@ always_ff @(posedge adc_clk) begin
         end
     end
     else if (state == COLD_HOLD) begin 
-        //comp will get code here (remains unconnected)
+        //comp will get code here (remains unconnected) (MAY NOT BE THE CASE ANYMORE)
+        //Here in lies my question, since this new adc is now just reading what the comparator returns, 
+        //we have no need for this, besides just waiting, check with prof if this is correct
         if (state_n == CODE_UPDATE) begin 
             code_hold <= 0; 
         end
@@ -108,7 +119,7 @@ always_ff @(posedge adc_clk) begin
             adc_code <= adc_code + 1'b1;
         end
     end
-    if (state == CODE_STORE) begin 
+    else if (state == CODE_STORE) begin 
         adc_o <= adc_code; 
         adc_done <= 1'b1;  
     end
