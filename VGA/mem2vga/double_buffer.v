@@ -15,7 +15,7 @@ module double_buffer (
     output [15:0] mem_raddr,
 
     //output side
-    output [3:0] buf_data_o //need a second buffer stage to give 4 bit values
+    output logic [3:0] buf_data_o //need to be buffered outside
 );
 
     // declarations
@@ -136,26 +136,29 @@ module double_buffer (
 
     assign rbuf_addr = xpos[9:2]; //increment address every 4 cycles
     assign rbuf_read_next = xpos[1] && xpos[0]; //every 4th cycle. d799 ends in b11;
-    //assign rbuf_top = ~(xpos[1] ^ xpos[0]); //x = 3,4... 7,8
-    assign rbuf_top = (~xpos[1]);
+    assign rbuf_top = (xpos[1] ^ xpos[0]); //x = 3,4... 7,8
+    // assign rbuf_top = (~xpos[1]);
 
-    always @(posedge clk) begin
-        if (reset) begin
-            rbuf_buf_r <= 0;
-        end else if (rbuf_read_next) begin
-            rbuf_buf_r <= rbuf_data;
-        end
-    end
+    // always @(posedge clk) begin
+    //     if (reset) begin
+    //         rbuf_buf_r <= 0;
+    //     end else if (rbuf_read_next) begin
+    //         rbuf_buf_r <= rbuf_data;
+    //     end
+    // end
+    // assign buf_data_o = rdata_l;
 
-    assign buf_data_o = rdata_l;
     //alternate top and bottom 4 bits
     always @(*) begin
         if (rbuf_top) begin
-            rdata_l = rbuf_buf_r[7:4];
+            buf_data_o = rbuf_data[7:4];
         end else begin
-            rdata_l = rbuf_buf_r[3:0];
+            buf_data_o = rbuf_data[3:0];
         end
     end
+    // need to change this to do buffering outside of this module.
+    // planning to have every output pin be passed out of a DFF to make timing easier (?)
+    // (may need to ask ethan about that one)
     
 
     // ==================================================================================

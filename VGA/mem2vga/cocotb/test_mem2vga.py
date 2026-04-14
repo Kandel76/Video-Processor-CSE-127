@@ -178,6 +178,7 @@ async def reset_test(dut):
     dut.wdata_i.value = 0
     dut.data_i.value = 0xee
 
+    await FallingEdge(dut.clk)
     await FallingEdge(dut.reset)
 
     with open("vga_out.bmp", "wb") as f:

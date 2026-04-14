@@ -8,11 +8,12 @@ module mem2vga
     // VGA Interface
     output hsync_o, 
     output vsync_o,
-    output [11:0] pixel_o, //12 bit RGB value
+    output [11:0] pixel_o, // 12 bit RGB value
 
-    //write interface
-    // input [0:0] wvalid_i,
-    input [15:0] waddr_i, //320*240 = 76800 pixels. 2 pixels per address -> 38400 addresses. clog2 -> 16 address bits
+    // write interface
+    input [15:0] waddr_i,   // 320*240 = 76800 pixels. 
+                            // 2 pixels per address -> 38400 addresses
+                            // clog2 -> 16 address bits
     input [7:0] wdata_i,
     output [0:0] wready_o,
 
@@ -29,9 +30,18 @@ module mem2vga
 
 
     // Declarations =================================================
-    wire active_area; //indicates whether currently in active area
+    //VGA
+    // wire active_area; //indicates whether currently in active area
     wire [9:0] xpos, ypos;
-    wire [3:0] brightness_w;
+    //VGA dffs
+    wire [0:0] active_area_n;
+    wire [0:0] hsync_n, vsync_n;
+    wire [11:0] pixel_n;
+    logic [0:0] active_area_r;
+    logic [0:0] hsync_r, vsync_r;
+    logic [11:0] pixel_r;
+    logic [0:0] active_area_p;
+    logic [0:0] hsync_p, vsync_p;
 
     //double buffer
     wire [0:0] endline_w;
@@ -59,8 +69,8 @@ module mem2vga
     //assign brightness_w = endline_w ? 4'hf: 4'h8;
 
     // Real assignments =============================================
-    assign active_o = active_area;
-    assign brightness_w = buf_data_o;
+    // assign active_o = active_area_r;
+    // assign brightness_w = buf_data_o;
 
     assign endline_w = (xpos == 641) & (odd_row_w);     //Used to switch double buffer
     assign newline_w = (xpos == 0) & (~odd_row_w);       //Used to synchronize double buffer signals
@@ -75,7 +85,7 @@ module mem2vga
     always @(posedge clk) begin
         if (reset) begin
             big_pix_addr <= 0;
-        end else if (active_area) begin
+        end else if (active_area_n) begin
             if (xpos[0]) begin // big pixel every other pixel
                 big_pix_addr <= big_pix_addr + 1;
             end
@@ -122,7 +132,7 @@ module mem2vga
         .big_pix_addr(big_pix_addr),
         .newline(newline_w),
         .endline(endline_w),
-        .active_area(active_area),
+        .active_area(active_area_n),
         .xpos(xpos),
 
         //memory side
@@ -135,16 +145,44 @@ module mem2vga
     );
     
     //VGA Output ====================================================
-    assign pixel_o = {3{(brightness_w & {4{active_o}})}};
+    assign pixel_n = {3{(buf_data_o & {4{active_o}})}};
 
     sync_manager syncer(
         .clk(clk),
         .reset(reset),
-        .hsync_o(hsync_o),
-        .vsync_o(vsync_o),
+        .hsync_o(hsync_n),
+        .vsync_o(vsync_n),
         .coord_x(xpos),
         .coord_y(ypos),
-        .active_area(active_area)
+        .active_area(active_area_n)
     );
+
+    //VGA Output Buffer DFFs ========================================
+    // n -> r -> p
+    always @(posedge clk) begin
+        if (reset) begin
+            active_area_r <= 0;
+            hsync_r <= 0;
+            vsync_r <= 0;
+            pixel_r <= 0;
+            active_area_p <= 0;
+            hsync_p <= 0;
+            vsync_p <= 0;
+        end else begin
+            active_area_r <= active_area_n;
+            hsync_r <= hsync_n;
+            vsync_r <= vsync_n;
+            pixel_r <= pixel_n;
+            active_area_p <= active_area_r;
+            hsync_p <= hsync_r;
+            vsync_p <= vsync_r;
+        end
+    end
+    
+    assign active_o = active_area_p;
+    assign hsync_o = hsync_p;
+    assign vsync_o = vsync_p;
+    assign pixel_o = pixel_r;
+
 
 endmodule
