@@ -12,7 +12,7 @@ module sar_adc (
     output logic [3:0] adc_o,
     //This will ensure photodiode voltage is captured and tested without changes
     output logic [0:0] hold_signal,
-    //send to scan controller
+    //send to scan controller, scan complete
     output logic [0:0] adc_done,
     //tells scan controller ready to scan,
     output logic [0:0] adc_ready
@@ -22,7 +22,7 @@ module sar_adc (
 typedef enum logic [2:0]{
     IDLE        =3'd0,  //Scan controller is off (completed scan)
     VIN_HOLD    =3'd1, //hold the diode voltage for a cycle before transitioning and setup the adc,
-    COLD_HOLD   =3'd2, //hold code to allow PWM signal to settle
+    PWM _HOLD   =3'd2, //hold code to allow PWM signal to settle
     CODE_UPDATE =3'd3, //checks comparator and decides whether to continue ramp
     CODE_STORE  =3'd4 //store the code and move back to idle
 
@@ -51,10 +51,10 @@ always_comb begin
             end
         //this state waits HOLD_CYCLES cycles to allow signal to propagate through chip (diode charge)
         VIN_HOLD: if (hold == (HOLD_CYCLES - 6'd1)) begin 
-            state_n = COLD_HOLD; 
+            state_n = PWM_HOLD; 
             end
         //wait SETTLE_CYCLES cycles before sampling comparator
-        COLD_HOLD: if (code_hold == (SETTLE_CYCLES - 6'd1)) begin 
+        PWM_HOLD: if (code_hold == (SETTLE_CYCLES - 6'd1)) begin 
             state_n = CODE_UPDATE;
         end
 
@@ -63,7 +63,7 @@ always_comb begin
             state_n = CODE_STORE; 
         end
         else begin 
-            state_n = COLD_HOLD; 
+            state_n = PWM_HOLD; 
         end
         CODE_STORE: state_n = IDLE; 
     default: state_n = IDLE; 
@@ -94,7 +94,7 @@ always_ff @(posedge adc_clk) begin
     //we want the hold_signal to be high until we are done with the code generation
     else if (state == VIN_HOLD) begin  
         adc_ready <= 1'b0;
-        if (state_n == COLD_HOLD) begin 
+        if (state_n == PWM_HOLD) begin 
             hold <= 0; 
         end
         else begin 
@@ -102,10 +102,8 @@ always_ff @(posedge adc_clk) begin
             hold_signal <= 1'b1;
         end
     end
-    else if (state == COLD_HOLD) begin 
-        //comp will get code here (remains unconnected) (MAY NOT BE THE CASE ANYMORE)
-        //Here in lies my question, since this new adc is now just reading what the comparator returns, 
-        //we have no need for this, besides just waiting, check with prof if this is correct
+    else if (state == PWM_HOLD) begin 
+        //code no longer sent to cmp, but we need to wait pwm cycles now
         if (state_n == CODE_UPDATE) begin 
             code_hold <= 0; 
         end
