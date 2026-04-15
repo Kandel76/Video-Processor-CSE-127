@@ -5,7 +5,7 @@ from cocotb.triggers import FallingEdge, Timer, RisingEdge, First
 import logging
 
 # Simulation settings
-do_second_frame = False
+do_second_frame = True
 
 
 # Pre-set simulated memory =====================================================
@@ -169,7 +169,7 @@ async def external_mem2(dut):    # simulated external memory 2
 async def reset_test(dut):
 
     # cocotb.start_soon(generate_clock(dut))
-    cocotb.start_soon(generate_clk_and_reset(dut, 500000))
+    cocotb.start_soon(generate_clk_and_reset(dut, 900000))
     cocotb.start_soon(external_mem1(dut))
     cocotb.start_soon(external_mem2(dut))
 
@@ -224,6 +224,9 @@ async def reset_test(dut):
                 f.write(bytearray([byte, byte, byte]))
 
     if (do_second_frame):
+
+        print(" ====== STARTING SECOND FRAME ======")
+
         with open("vga_out_2.bmp", "wb") as f:
             # construct bmp header for 24 bit color depth, 640x480p
             # 0-7
