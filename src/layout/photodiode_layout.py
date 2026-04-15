@@ -439,14 +439,14 @@ def active_pixel_3t(
         layers=[gf180mcu.LAYER.nwell], unlock=True)
     active_pixel.add_ref(rounded_nwell)
 
-    # my testing code to add SAB and COMP layers
+    # adding SAB and COMP layers over photodiode
     polys = rounded_nwell.get_polygons()
 
     for poly_list in polys.values():
         for poly in poly_list:
             active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.comp)
             active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
-    # COMP over diode done
+    # seems there is already COMP layers by default over transistors
 
     return active_pixel
 
@@ -458,5 +458,5 @@ gf180mcu.PDK.activate()
 
 com = active_pixel_3t()
 c = gf.Component()
-c.add_ref(com, rows=300, columns=500, row_pitch=com.xsize, column_pitch=com.ysize)
+c.add_ref(com, rows=240, columns=320, row_pitch=com.xsize, column_pitch=com.ysize)
 c.show()
