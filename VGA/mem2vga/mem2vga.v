@@ -83,7 +83,7 @@ module mem2vga
     assign odd_row_w = ypos[0];
 
     always @(posedge clk) begin
-        if (reset) begin
+        if (reset || (ypos > 480)) begin
             big_pix_addr <= 0;
         end else if (active_area_n) begin
             if (xpos[0]) begin // big pixel every other pixel

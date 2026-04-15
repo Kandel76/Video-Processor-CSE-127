@@ -51,6 +51,7 @@ module double_buffer (
 
     // Wire assignments =======================================================
     assign pix_mem_w = big_pix_addr[16:1]; //address for external memory
+    //each memory address has 2 pixels, so shift left 2 by just removing bottom bit
 
     // 6 cycle logic ==========================================================
 
