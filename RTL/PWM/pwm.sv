@@ -1,5 +1,5 @@
 module pwm
-    #(parameter N = 6 // resolution
+    #(parameter N = 4 // resolution
     )
     (input logic clk,
      // system clock (assume 25MHz)
@@ -9,7 +9,12 @@ module pwm
      // duty cycle
      input logic [N - 1 : 0] period,
 
-     output logic pwm_out);
+     output logic pwm_out,
+     
+     output logic period_start_out
+     //one cycle pulse when the period starts (counter resets to 0 for a clean start)
+     // so no mixing of duty cycle
+     );
 
   // equations
   //  f_pwm = (f_clk / period)
@@ -56,5 +61,6 @@ module pwm
     end
   end
 
+  assign period_start_out = (count_q == 0) && (period != 0); 
   assign pwm_out = pwm_q;
 endmodule
