@@ -224,6 +224,7 @@ def body_contact(source_follower_spec: ComponentSpec = source_follower_nfet):
 
 @gf.cell
 def active_pixel_3t(
+        dark = False,
         photodiode_spec: ComponentSpec = nwell_psub_photodiode,
         reset_transistor_spec: ComponentSpec = reset_transistor,
         source_follower_spec: ComponentSpec = source_follower_nfet,
@@ -231,11 +232,11 @@ def active_pixel_3t(
         body_contact: ComponentSpec = body_contact):
 
     active_pixel = gf.Component()
-    photodiode = gf.get_component(photodiode_spec)
-    reset_transistor = gf.get_component(reset_transistor_spec)
-    source_follower_nfet = gf.get_component(source_follower_spec)
-    row_select = gf.get_component(row_select_spec)
-    body_contact = gf.get_component(body_contact)
+    photodiode = gf.get_component(photodiode_spec).copy()
+    reset_transistor = gf.get_component(reset_transistor_spec).copy()
+    source_follower_nfet = gf.get_component(source_follower_spec).copy()
+    row_select = gf.get_component(row_select_spec).copy()
+    body_contact = gf.get_component(body_contact).copy()
 
     photodiode_ref = active_pixel << photodiode
     active_pixel << reset_transistor
@@ -420,10 +421,10 @@ def active_pixel_3t(
     )
 
     # Create extra nwell to fill out the space
-    nwell_extra_ref = active_pixel << gf.components.rectangle(size=(
-        body_contact.xmax - photodiode.xmin - 0.07, (body_contact.ymin - 0.4) - row_enable.ymax), layer=gf180mcu.LAYER.nwell)
+    nwell_extra_ref = active_pixel << gf.components.rectangle(size=(body_contact.xmax - photodiode_ref.xmin - 0.07, (body_contact.ymin - 0.4) - row_enable.ymax), layer=gf180mcu.LAYER.nwell)
     nwell_extra_ref.ymin = row_enable.ymax
-    nwell_extra_ref.xmin = photodiode.xmin
+    nwell_extra_ref.xmin = photodiode_ref.xmin
+
 
     rinner = 100
     router = 100
@@ -445,7 +446,8 @@ def active_pixel_3t(
     for poly_list in polys.values():
         for poly in poly_list:
             active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.comp)
-            active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
+            if (dark == False):
+                active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
     # seems there is already COMP layers by default over transistors
 
     return active_pixel
@@ -456,7 +458,15 @@ gf.kcl.dbu = 5e-3  # set 1 DataBase Unit to 5 nm
 
 gf180mcu.PDK.activate()
 
+# create the array, and add a row of dark pixels to the side
 com = active_pixel_3t()
+dark_row = active_pixel_3t(dark = True)
+
 c = gf.Component()
-c.add_ref(com, rows=240, columns=320, row_pitch=com.xsize, column_pitch=com.ysize)
+active_pixels = c.add_ref(com, rows=240, columns=320, row_pitch=com.xsize, column_pitch=com.ysize)
+dark_pixels = c.add_ref(dark_row, rows=240, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
+
+dark_pixels.xmin = active_pixels.xmax
+dark_pixels.ymin = active_pixels.ymin
+
 c.show()
