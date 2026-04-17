@@ -19,7 +19,7 @@ module sar_adc (
     
 );
 //State machine 
-typdef enum logic [1:0] {
+typedef enum logic [1:0] {
     IDLE = 2'b00, //Initial State, awaits Scan Controller and PWM inputs
     SAMPLE = 2'b01, //Samples cmp_o while Valid_voltage high
     UPDATE = 2'b10, //Updates adc code based on cmp_o
@@ -48,7 +48,7 @@ always_comb begin
             else begin 
                 state_n = SAMPLE; 
             end
-        UPDATE: if ((cmp_i != 0) && (adc_code != 4'hf) && (valid_voltage) ) begin 
+        UPDATE: if ((cmp_i != 0) && (adc_code != 4'hf) && (valid_voltage)) begin 
             state_n = SAMPLE; 
         end
             else if ((cmp_i == 1) || (adc_code == 4'hf)) begin 
@@ -58,7 +58,7 @@ always_comb begin
     default: state_n = IDLE; 
     endcase
 end
-alwyas_ff @(posedge clk) begin 
+always_ff @(posedge clk) begin 
     state <= state_n; 
     if (reset_signal) begin 
         adc_code <= '0; 
