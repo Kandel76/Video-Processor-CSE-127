@@ -13,6 +13,7 @@ do_second_frame = True
 # the image must be a 320x240p file in the .bmp format with 8 bit color depth
 imagefolder = "images/"
 imagefile = "Kitty.bmp" # Set this to the name of the 320x240 bmp image file to use as input.
+secondimagefile = "Smiley.bmp"
 
 imagepath = imagefolder + imagefile
 print("image file: <", imagepath, ">")
@@ -46,12 +47,6 @@ with open(imagepath, "rb") as dafile:
         byte1 = dafile.read(1)
         iterator = iterator + 1
 
-    # print("Manually inserting values to mem1")
-    # sim_memory[160] = 0x99
-    # sim_memory[161] = 0x88
-    # sim_memory[162] = 0x7e
-    # sim_memory[163] = 0x66
-
     print("finished writing memory 1")
 
     iterator = 0
@@ -67,6 +62,47 @@ with open(imagepath, "rb") as dafile:
         byte1 = dafile.read(1)
         iterator = iterator + 1
 
+# write interface =============================================================
+# emulate writing behavior to test writing memory while reading
+# essentially does the same as the above code but using the internal clock
+async def mem_write(dut, imagefile2):
+    imagepath2 = imagefolder + imagefile2
+    print("mem_write image file: <", imagepath2, ">")
+
+    # Same code as above, but added await for clock synchronicity.
+    # Because the data is written every 6 cycles but read every 8 cycles, we
+    # expect the writes to out-pace the reads unless given a head start.
+
+    await RisingEdge(dut.vsync_o) #This line should mean only the second frame is overwritten
+
+    with open(imagepath2, "rb") as dafile:
+        for _ in range (122):
+            byte = dafile.read(1)
+        
+        byte1 = dafile.read(1)
+        iterator = 0
+        while (byte1 != b""):
+            # perform the read 3 times, once for each color channel
+            # this method means only the red color channel is being read
+            # which should be fine
+            byte2 = dafile.read(1)
+            byte2 = dafile.read(1)
+            byte2 = dafile.read(1)
+
+            # turn bytes into hex and then give to write interface
+            # {upper4, 4'b0000} | {4'b000, lower4}
+            dut.waddr_i.value = iterator
+            dut.wdata_i.value = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
+
+            byte1 = dafile.read(1)
+            byte1 = dafile.read(1)
+            byte1 = dafile.read(1)
+            iterator = iterator + 1
+
+            await RisingEdge(dut.wready_o)
+
+        print("mem_write finished overwriting memory")
+    
 
 # helpers =====================================================================
 async def generate_clock(dut, NUMCYCLES=200):
@@ -134,8 +170,6 @@ async def external_mem1(dut):    # simulated external memory 1
                     # print(" ! ERROR: MEM1: Attempted to access nonexistent memory address", int(dut.addr_o.value))
                     dut.data_i.value = 0xEE
 
-
-
 async def external_mem2(dut):    # simulated external memory 2
     #dictionary to simulate specified addresses
     # look for low nCS2
@@ -172,6 +206,7 @@ async def reset_test(dut):
     cocotb.start_soon(generate_clk_and_reset(dut, 900000))
     cocotb.start_soon(external_mem1(dut))
     cocotb.start_soon(external_mem2(dut))
+    cocotb.start_soon(mem_write(dut, secondimagefile))
 
     # set values to zero
     dut.waddr_i.value = 0

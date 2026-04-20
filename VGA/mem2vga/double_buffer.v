@@ -120,7 +120,9 @@ module double_buffer (
     end
 
     always @(*) begin
-        if (newline) begin
+        if (mem_raddr_r > 38400) begin //reset to prevent reading unwritten memory
+            mem_raddr_n = 0;
+        end else if (newline) begin
             mem_raddr_n = pix_mem_w + 16'd163;
             //added an extra 3 to account for buffers on the data path
         end else if (sixth_l && (wbuf_addr_r < 160)) begin
