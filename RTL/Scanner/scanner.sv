@@ -66,6 +66,7 @@ module scan_controller #(
     logic [DATA_BITS*ADC_BANKS-1:0] pixel_data_d, pixel_data_q; //register to hold pixel data from ADC
     logic pixel_valid_d, pixel_valid_q; //register to hold pixel valid signal
 
+// driving d_ff
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         state_q       <= IDLE;
@@ -82,7 +83,7 @@ always_ff @(posedge clk) begin
     end
 end
 
-// driving d_ff
+//comb logic
     always_comb begin
         // Default state changes
         state_d      = state_q;
@@ -99,6 +100,7 @@ end
         row_reset     = 0;
         row_enable    = 0;
         adc_read_en   = 0;
+        adc_start     = 0;
         case (state_q)
             IDLE: begin
                 //wait for a flag to start the next frame
@@ -132,6 +134,7 @@ end
 
             WAIT_CONVERT: begin
                 row_enable[row_cnt_q] = 1; //keep row enabled
+                adc_start = 1; //start the adc conversion
                 adc_read_en = 1; //enable the adc so it starts reading
 
                 if (comp_done && reset_adc) begin //check if all comparisons done for this row

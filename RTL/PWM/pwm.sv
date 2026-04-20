@@ -5,7 +5,7 @@ module pwm
      // system clock (assume 25MHz)
      input logic rst_n,
      // sync  reset, active low
-     input logic [N - 1 : 0] duty_threshold,
+     input logic [N - 1 : 0] duty_cycle,
      // duty cycle
      input logic [N - 1 : 0] period,
 
@@ -18,8 +18,8 @@ module pwm
 
   // equations
   //  f_pwm = (f_clk / period)
-  //  period = (f_clk / f_pwm)
-  //  Duty = duty_threshold / period
+  //  period = (f_clk / f_pwm
+  //  Duty = duty_cycle / period
 
   // D - next state
   // Q - current state
@@ -43,10 +43,10 @@ module pwm
       end
 
       // duty / clamp
-      if (duty_threshold >= period) begin
+      if (duty_cycle >= period) begin
         pwm_d = 1'b1; // treat >= as 100% duty
       end else begin
-        pwm_d = (count_q < duty_threshold);
+        pwm_d = (count_q < duty_cycle);
       end
     end
   end
