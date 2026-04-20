@@ -16,7 +16,8 @@ M2 OUT PD VDD VSS nfet_03v3 w=1.5e-6 l=3.6e-7
 M3 COL SEL OUT VSS nfet_03v3 w=3.7e-7 l=3.6e-7
 
 * Photodiode
-D1 VSS PD diode_nw2ps_03v3 area=3.9e-11
+* Dimensions of 6.815um x 6.83um with 1.83um x 4.475 cutout
+D1 VSS PD diode_nw2ps_03v3 area=3.835e-11 pj=2.725e-5
 
 * Signals (Reset, Select, Light)
 * PULSE(V_start, V_end, Delay, Rise Time, Fall Time, Hold Time, Period)
