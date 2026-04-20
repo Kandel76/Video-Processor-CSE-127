@@ -108,3 +108,4 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
         end
     end
 end
+endmodule
