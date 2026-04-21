@@ -8,12 +8,12 @@
 //controls the iteration of all rows, columns are parallel so no need to iterate through
 
 
-module scan_controller #(
+module scanner #(
     parameter int ROWS = 240,
     parameter int ADC_BANKS = 320,
     parameter int DATA_BITS = 4,
-    parameter int RESET_CYCLES = 10, //number of cycles to hold reset signal for pixels
-    parameter int INTEGRATION_CYCLES = 10 //number of cycles to hold integrate signal for pixels
+    parameter int RESET_CYCLES = 20, //number of cycles to hold reset signal for pixels
+    parameter int INTEGRATION_CYCLES = 20 //number of cycles to hold integrate signal for pixels
 )(
 
     input logic clk,

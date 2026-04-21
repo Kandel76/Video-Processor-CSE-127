@@ -1,5 +1,5 @@
 module pwm
-    #(parameter N = 4 // resolution
+    #(parameter N = 5 // resolution
     )
     (input logic clk,
      // system clock (assume 25MHz)

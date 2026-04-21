@@ -36,7 +36,7 @@ ramp_fsm state, state_n;
 logic [$clog2(adc_wait_cycles)-1:0] adc_wait; 
 logic [0:0] adc_wait_done; 
 //counter to make valid_voltage high for exactly `voltage` cycles
-logic [$clog2(voltage)-1:0] voltage_sample_now;
+logic [$clog2(voltage+1)-1:0] voltage_sample_now;
 logic [0:0] valid_high; 
 //counter to pulse reset signal 
 logic [$clog2(pulse)-1:0] pulse_wait;

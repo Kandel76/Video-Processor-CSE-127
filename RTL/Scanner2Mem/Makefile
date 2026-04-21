@@ -1,7 +1,7 @@
-TOP  = scanner_tb
-SRCS = ../Scanner2Mem/scanner.sv scanner_tb.sv
-OUT  = scanner_tb.out
-VCD  = scanner_tb.vcd
+TOP  = scanner2mem_tb
+SRCS = scanner.sv scanner_to_mem.sv scanner_test_top.sv scanner2mem_tb.sv
+OUT  = scanner2mem_tb.out
+VCD  = scanner2mem_tb.vcd
 
 IVERILOG = iverilog
 VVP      = vvp
