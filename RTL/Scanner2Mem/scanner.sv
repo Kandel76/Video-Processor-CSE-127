@@ -29,6 +29,7 @@ module scan_controller #(
 
     //To the ADC
     output logic                              adc_read_en, //starts the adc to enable reading
+    output logic                              adc_start,   //triggers ADC conversion start
 
     //From the ADC Module
     input logic comp_done,

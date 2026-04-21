@@ -24,6 +24,7 @@ module scanner_tb;
     logic                               row_done;
     logic                               frame_done;
     logic [(DATA_BITS*ADC_BANKS)-1:0]   pixel_data;
+    logic                               adc_start;
 
     scan_controller #(
         .ROWS              (ROWS),
@@ -46,7 +47,8 @@ module scanner_tb;
         .pixel_valid  (pixel_valid),
         .row_done     (row_done),
         .frame_done   (frame_done),
-        .pixel_data   (pixel_data)
+        .pixel_data   (pixel_data),
+        .adc_start     (adc_start)
     );
 
     // 10ns clock
@@ -77,6 +79,7 @@ module scanner_tb;
     endtask
 
     integer row, step;
+    logic [(DATA_BITS*ADC_BANKS)-1:0] expected_pdata;
 
     initial begin
         // initialise inputs
@@ -95,11 +98,25 @@ module scanner_tb;
         rst_n = 1;
         wait_cycles(2);
 
+        assert (pixel_valid == 0) else $error("T1 FAIL: pixel_valid should be 0 after reset");
+        assert (frame_done  == 0) else $error("T1 FAIL: frame_done should be 0 after reset");
+        assert (adc_read_en == 0) else $error("T1 FAIL: adc_read_en should be 0 after reset");
+        assert (row_done    == 0) else $error("T1 FAIL: row_done should be 0 after reset");
+        assert (row_reset   == '0) else $error("T1 FAIL: row_reset should be 0 after reset");
+        assert (row_enable  == '0) else $error("T1 FAIL: row_enable should be 0 after reset");
+        $display("  PASS: all outputs deasserted after reset");
+
         // ----------------------------------------------------------------
         // TEST 2: idle -- nothing should happen without frame_start
         // ----------------------------------------------------------------
         $display("=== TEST 2: idle, no frame_start ===");
         wait_cycles(5);
+
+        assert (pixel_valid == 0) else $error("T2 FAIL: pixel_valid should stay 0 in idle");
+        assert (frame_done  == 0) else $error("T2 FAIL: frame_done should stay 0 in idle");
+        assert (adc_read_en == 0) else $error("T2 FAIL: adc_read_en should stay 0 in idle");
+        assert (row_done    == 0) else $error("T2 FAIL: row_done should stay 0 in idle");
+        $display("  PASS: no outputs asserted during idle");
 
         // ----------------------------------------------------------------
         // TEST 3: full frame -- 4 rows, 2 comparison steps per row
@@ -119,18 +136,34 @@ module scanner_tb;
             adc_compare_step(0);
 
             // step 1: final comparison, capture and output
-            adc_data = {DATA_BITS*ADC_BANKS{1'b0}} | (row * 2 + 1);
+            expected_pdata = {DATA_BITS*ADC_BANKS{1'b0}} | (row * 2 + 1);
+            adc_data = expected_pdata;
             adc_compare_step(1);
 
             // wait for pixel_valid handshake to complete
-            @(posedge pixel_valid);
+            @(posedge pixel_valid); #1;
+
+            assert (pixel_row  == row[$clog2(ROWS)-1:0])
+                else $error("T3 FAIL row %0d: pixel_row=%0d expected=%0d", row, pixel_row, row);
+            assert (pixel_data == expected_pdata)
+                else $error("T3 FAIL row %0d: pixel_data=0x%0h expected=0x%0h", row, pixel_data, expected_pdata);
+            $display("  PASS row %0d: pixel_row=%0d pixel_data=0x%0h", row, pixel_row, pixel_data);
+
             wait_cycles(1);
         end
 
         // wait for frame_done
         @(posedge frame_done);
         $display("=== frame_done received ===");
-        wait_cycles(3);
+        wait_cycles(1);
+
+        // FSM returns to IDLE after frame_done -- all drive signals should clear
+        assert (pixel_valid == 0) else $error("T3 FAIL: pixel_valid should be 0 after frame_done");
+        assert (adc_read_en == 0) else $error("T3 FAIL: adc_read_en should be 0 after frame_done");
+        assert (row_reset   == '0) else $error("T3 FAIL: row_reset should be 0 after frame_done");
+        assert (row_enable  == '0) else $error("T3 FAIL: row_enable should be 0 after frame_done");
+        $display("  PASS: outputs clear after frame_done");
+        wait_cycles(2);
 
         // ----------------------------------------------------------------
         // TEST 4: second frame starts cleanly
@@ -143,13 +176,48 @@ module scanner_tb;
         // just do one row to confirm the FSM restarted
         adc_data = 16'hABCD;
         adc_compare_step(0);
-        adc_data = 16'h1234;
+        expected_pdata = 16'h1234;
+        adc_data = expected_pdata;
         adc_compare_step(1);
-        @(posedge pixel_valid);
+        @(posedge pixel_valid); #1;
+
+        assert (pixel_row  == 0)
+            else $error("T4 FAIL: pixel_row should be 0 for first row of second frame, got %0d", pixel_row);
+        assert (pixel_data == expected_pdata)
+            else $error("T4 FAIL: pixel_data=0x%0h expected=0x%0h", pixel_data, expected_pdata);
+        $display("  PASS: second frame row 0 pixel_row=%0d pixel_data=0x%0h", pixel_row, pixel_data);
+
         wait_cycles(5);
 
         $display("=== simulation complete ===");
         $finish;
+    end
+
+    // -------------------------------------------------------
+    // Clocked assertions (checked every posedge — iverilog compatible)
+    // -------------------------------------------------------
+    always @(posedge clk) begin
+        // no outputs driven while in reset
+        if (!rst_n) begin
+            assert (pixel_valid == 0) else $error("CLKASSERT FAIL: pixel_valid asserted during reset");
+            assert (adc_read_en == 0) else $error("CLKASSERT FAIL: adc_read_en asserted during reset");
+            assert (frame_done  == 0) else $error("CLKASSERT FAIL: frame_done asserted during reset");
+        end
+
+        // pixel_valid and frame_done must not be high in the same cycle
+        assert (!(pixel_valid && frame_done))
+            else $error("CLKASSERT FAIL: pixel_valid and frame_done asserted simultaneously");
+
+        // only one row may be reset or enabled at a time
+        assert ($onehot0(row_reset))
+            else $error("CLKASSERT FAIL: row_reset is not one-hot, value=%0b", row_reset);
+        assert ($onehot0(row_enable))
+            else $error("CLKASSERT FAIL: row_enable is not one-hot, value=%0b", row_enable);
+
+        // ADC must not be read while pixels are being reset
+        if (|row_reset)
+            assert (adc_read_en == 0)
+                else $error("CLKASSERT FAIL: adc_read_en high while row_reset is active");
     end
 
     // timeout watchdog
