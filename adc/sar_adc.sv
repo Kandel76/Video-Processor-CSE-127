@@ -1,5 +1,7 @@
 //New ADC design based on 4 state-machine
-module sar_adc (
+module sar_adc #(
+    parameter int SEND_WAIT_CYCLES = 1
+) (
     //global clk
     input logic [0:0] clk,
     //comparator input
@@ -36,6 +38,8 @@ adc_fsm state_n, state;
 logic [3:0] adc_code; 
 //code_done here ensures that we only give out 1 4-bit code per row. 
 logic [0:0] cmp_i, voltage_signal, code_done; 
+//counter to wait in the send state
+logic [$clog2(SEND_WAIT_CYCLES)-1:0] send_wait_count;
 //FSM logic 
 always_comb begin 
     state_n = state; 
@@ -62,7 +66,12 @@ always_comb begin
             else begin 
                 state_n = UPDATE; 
             end
-        SEND: state_n = IDLE; 
+        SEND: if (send_wait_count == SEND_WAIT_CYCLES - 1) begin
+            state_n = IDLE;
+        end
+            else begin
+                state_n = SEND;
+            end
         default: state_n = IDLE; 
     endcase
 end
@@ -75,6 +84,7 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
         adc_ready <= 1'b1;
         comp_done <= 1'b0; 
         code_done <= 1'b0; 
+        send_wait_count <= '0;
         state <= IDLE; 
     end
     else begin 
@@ -86,18 +96,21 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
             adc_done <= 1'b0; 
             adc_ready <= 1'b1;
             comp_done <= 1'b0; 
+            send_wait_count <= '0;
         end
         else if (state == SAMPLE) begin 
             adc_ready <= 1'b0;
             adc_done  <= 1'b0;
             cmp_i <= cmp_o;
             comp_done <= 1'b0; 
+            send_wait_count <= '0;
         end
         else if (state == UPDATE) begin 
             adc_ready <= 1'b0;
             adc_done  <= 1'b0;
             comp_done <= 1'b1;
             adc_code <= adc_code + {3'b0, cmp_i}; 
+            send_wait_count <= '0;
         end
         else if (state == SEND) begin 
             adc_ready <= 1'b0;
@@ -105,6 +118,7 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
             comp_done <= 1'b0;
             adc_o <= adc_code; 
             code_done <= 1'b1; 
+            send_wait_count <= send_wait_count + 1'b1;
         end
     end
 end
