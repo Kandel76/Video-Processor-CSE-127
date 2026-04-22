@@ -33,7 +33,7 @@ module scanner #(
 
     //From the ADC Module
     input logic comp_done,
-    input logic [(DATA_BITS*ADC_BANKS)-1:0] adc_data,  //data from the ADC
+    input logic [(DATA_BITS*(ADC_BANKS+1))-1:0] adc_data,  //data from the ADC //extra column for dark current reference
 
     //For memory mapping and control
     input  logic                              frame_start, //FOR ANOTHER MODULE to start a new frame (later used to frame rate control)
@@ -66,6 +66,11 @@ module scanner #(
     logic [$clog2(INTEGRATION_CYCLES > RESET_CYCLES ? INTEGRATION_CYCLES : RESET_CYCLES)-1:0] phase_cnt_d, phase_cnt_q; //shared timer for RESET and INTEGRATE phases, choosees width on which is larger
     logic [DATA_BITS*ADC_BANKS-1:0] pixel_data_d, pixel_data_q; //register to hold pixel data from ADC
     logic pixel_valid_d, pixel_valid_q; //register to hold pixel valid signal
+
+    //extract dark reference and set up for threshold operations                        
+    logic [DATA_BITS-1:0] raw_value; //register to hold the raw value from each column for thresholding
+    logic [DATA_BITS-1:0] ref_value; //dark current reference value from the extra column in adc_data
+
 
 // driving d_ff
 always_ff @(posedge clk) begin
@@ -139,7 +144,12 @@ end
                 adc_read_en = 1; //enable the adc so it starts reading
 
                 if (comp_done && reset_adc) begin //check if all comparisons done for this row
-                    pixel_data_d = adc_data;
+                    // compute pixel daat based on reference for dark current
+                    ref_value = adc_data[DATA_BITS-1:0];
+                    for (int i=0; i< ADC_BANKS; i++) begin
+                        raw_value = adc_data[(i+1)*DATA_BITS +: DATA_BITS]; //extract the data for each column
+                        pixel_data_d[i*DATA_BITS +: DATA_BITS] = (raw_value > ref_value) ? raw_value - ref_value : 0; //simple thresholding, can be replaced with more complex processing if needed
+                    end
                     state_d = OUTPUT_PIXELS;
                 end else if (comp_done) begin //comparison done, step to next reference voltage
                     state_d = RESET_PIXELS;

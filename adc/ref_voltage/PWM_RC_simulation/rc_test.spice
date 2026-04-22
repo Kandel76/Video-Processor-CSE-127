@@ -7,16 +7,15 @@
 
 
 * RC low-pass filter: PWM to DC
-* R=10k, C=620pF 
-* PWM: f_pwm = 25MHz/16 = 1.5625MHz, 3.3V, 50% duty (duty_threshold=8/16)
-
+* R=10k, C=220pF
+* PWM: f_pwm = 6.25MHz, 3.3V, 50% duty
 
 * pwm duty cycle (lowv highv rise_t fall_t t_on T_period)
-Vpwm in 0 PULSE(0 3.3 0 1n 1n 320n 640n)
+Vpwm in 0 PULSE(0 3.3 0 0.1n 0.1n 80n 160n)
 
 
 R1 in out 10k
-C1 out 0 620p
+C1 out 0 220p
 
 * in
 * |
@@ -29,14 +28,14 @@ C1 out 0 620p
 * gnd
 
 .control
-tran 1n 31u
+tran 0.1n 11u
 wrdata tran.data v(in) v(out)
 .endc
 
-* Measure at 5 tau = 28 us (last full PWM cycle before end)
-.measure tran vout_max MAX v(out) FROM=29.5u TO=31u
-.measure tran vout_min MIN v(out) FROM=29.5u TO=31u
-.measure tran v_ripple PP  v(out) FROM=29.5u TO=31u
-.measure tran v_avg    AVG v(out) FROM=29.5u TO=31u
+* Measure at 5 tau = 11 us (last full PWM cycle before end)
+.measure tran vout_max MAX v(out) FROM=10.84u TO=11u
+.measure tran vout_min MIN v(out) FROM=10.84u TO=11u
+.measure tran v_ripple PP  v(out) FROM=10.84u TO=11u
+.measure tran v_avg    AVG v(out) FROM=10.84u TO=11u
 
 .end
