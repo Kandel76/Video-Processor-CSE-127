@@ -80,7 +80,7 @@ module chip_core #(
 
         .data_o(bidir_out[39:32]),
         .data_i(input_in[7:0])
-    )
+    );
 
 
 endmodule
