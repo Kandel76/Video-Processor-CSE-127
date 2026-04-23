@@ -12,10 +12,12 @@ parameter int pulse = 4)(
     input logic [0:0] adc_start,
     //to the pwm module, the duty cycle to use
     output logic [3:0] duty_cycle,
-    //to the adc, resets interal counters for next code generation 
+    //to the adc, resets interal counters for next code generation
     output logic [0:0] reset_adc,
     //allows the adc to sample voltage we expect to be accurate
-    output logic [0:0] valid_voltage
+    output logic [0:0] valid_voltage,
+    //high during the final ramp step so scanner skips RESET_PIXELS
+    output logic [0:0] last_step
 
 );
 //Ramp counter to ensure we have waited the necessary time for the PWM to settle
@@ -33,7 +35,7 @@ typedef enum logic [1:0] {
 ramp_fsm state, state_n; 
 
 //Counter to ensure all adcs have settled before moving to the next duty cycle
-logic [$clog2(adc_wait_cycles)-1:0] adc_wait; 
+logic [$clog2(adc_wait_cycles+1)-1:0] adc_wait;
 logic [0:0] adc_wait_done; 
 //counter to make valid_voltage high for exactly `voltage` cycles
 logic [$clog2(voltage+1)-1:0] voltage_sample_now;
@@ -85,7 +87,10 @@ always_comb begin
         
     endcase
 end
-always_ff @(posedge clk or posedge global_reset) begin 
+
+assign last_step = (state == VOLTAGE_VALID) && (duty_cycle == 4'b1111);
+
+always_ff @(posedge clk or posedge global_reset) begin
     if (global_reset) begin 
         ramp_counter <= '0;
         adc_wait <= '0; 

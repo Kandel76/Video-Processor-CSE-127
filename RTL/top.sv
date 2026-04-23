@@ -4,7 +4,7 @@ module top #(
     parameter int DATA_BITS          = 4,
     parameter int RESET_CYCLES       = 20,
     parameter int INTEGRATION_CYCLES = 20,
-    parameter int ADC_WAIT_CYCLES    = 4,
+    parameter int ADC_WAIT_CYCLES    = 1,
     parameter int RAMP_TIME          = 775,
     parameter int PWM_PERIOD         = 15   // full scale for N=4 (duty_cycle 0..15)
 )(
@@ -12,7 +12,7 @@ module top #(
     input  logic                           rst_n,      // active-low global reset
 
     // one digital threshold per column (represents analog photodiode voltage)
-    input  logic [ADC_BANKS-1:0]           pixel_in,
+    input  logic [ADC_BANKS:0]           pixel_in,
 
     // scanner frame control
     input  logic                           frame_start,
@@ -30,15 +30,11 @@ module top #(
     output logic [ROWS-1:0]                row_reset_out
 );
 
-    // -----------------------------------------------------------------------
     // Reset bridging: scanner/pwm use active-low; ramp_controller active-high
-    // -----------------------------------------------------------------------
     logic global_reset;
     assign global_reset = ~rst_n;
 
-    // -----------------------------------------------------------------------
     // Internal signals
-    // -----------------------------------------------------------------------
 
     // ramp_controller <-> pwm
     logic [3:0] duty_cycle;
@@ -48,28 +44,23 @@ module top #(
     // ramp_controller -> all ADC banks
     logic reset_adc;
     logic valid_voltage;
+    logic last_step;
 
     // scanner -> ramp_controller / ADC banks
     logic adc_start;
     logic adc_read_en;
 
     // per-bank signals
-    logic [ADC_BANKS-1:0]           cmp_q;
-    logic [DATA_BITS*ADC_BANKS-1:0] adc_data;
-    logic [ADC_BANKS-1:0]           comp_done_per;
-    logic [ADC_BANKS-1:0]           adc_done_per;
+    logic [ADC_BANKS:0]           cmp_q;
+    logic [DATA_BITS*(ADC_BANKS+1)-1:0] adc_data;
+    logic [ADC_BANKS:0]           comp_done_per;
+    logic [ADC_BANKS:0]           adc_done_per;
 
     // aggregate comp_done: all banks must finish before ramp steps
     logic comp_done;
-    assign comp_done = &comp_done_per;
+    assign comp_done = &comp_done_per[ADC_BANKS:1];
 
-    // -----------------------------------------------------------------------
     // PWM  (N=4 matches 4-bit duty_cycle from ramp_controller)
-    //
-    // NOTE: comparator.sv instantiates GF180 standard cells.
-    // Simulation requires the GF180 model library passed to the simulator,
-    // e.g.: iverilog -y <path/to/gf180-models> ...
-    // -----------------------------------------------------------------------
     pwm #(.N(4)) u_pwm (
         .clk             (clk),
         .rst_n           (rst_n),
@@ -79,9 +70,7 @@ module top #(
         .period_start_out(period_start_out)
     );
 
-    // -----------------------------------------------------------------------
     // Ramp controller
-    // -----------------------------------------------------------------------
     ramp_controller #(
         .adc_wait_cycles(ADC_WAIT_CYCLES),
         .ramp_time      (RAMP_TIME)
@@ -92,12 +81,11 @@ module top #(
         .adc_start    (adc_start),
         .duty_cycle   (duty_cycle),
         .reset_adc    (reset_adc),
-        .valid_voltage(valid_voltage)
+        .valid_voltage(valid_voltage),
+        .last_step    (last_step)
     );
 
-    // -----------------------------------------------------------------------
     // Scanner
-    // -----------------------------------------------------------------------
     scanner #(
         .ROWS              (ROWS),
         .ADC_BANKS         (ADC_BANKS),
@@ -108,6 +96,7 @@ module top #(
         .clk        (clk),
         .rst_n      (rst_n),
         .reset_adc  (reset_adc),
+        .last_step  (last_step),
         .row_enable (row_enable),
         .row_reset  (row_reset_out),
         .adc_read_en(adc_read_en),
@@ -123,12 +112,10 @@ module top #(
         .pixel_data (pixel_data)
     );
 
-    // -----------------------------------------------------------------------
     // Per-column: comparator + sar_adc
-    // -----------------------------------------------------------------------
     genvar i;
     generate
-        for (i = 0; i < ADC_BANKS; i++) begin : g_adc_bank
+        for (i = 0; i <= ADC_BANKS; i++) begin : g_adc_bank
             comparator u_cmp (
                 .clk_i (clk),
                 .v_inp (pixel_in[i]),  // per-column pixel threshold

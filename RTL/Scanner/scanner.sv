@@ -20,7 +20,8 @@ module scanner #(
     input logic rst_n,   //ACTIVE LOW
 
     //from the ramp controller
-    input logic reset_adc, //signals when to go to next row since all comparion are done
+    input logic reset_adc,  //signals when to go to next row since all comparion are done
+    input logic last_step,  //high on the final ramp step — suppresses RESET_PIXELS so scanner stays for reset_adc
 
     //To the photodiodes -- this module handles reset and integration after each row and each operation of comparators
     //integrating means row_enable is high for N cycles
@@ -143,7 +144,7 @@ end
                 adc_start = 1; //start the adc conversion
                 adc_read_en = 1; //enable the adc so it starts reading
 
-                if (comp_done && reset_adc) begin //check if all comparisons done for this row
+                if (reset_adc) begin //check if all comparisons done for this row
                     // compute pixel daat based on reference for dark current
                     ref_value = adc_data[DATA_BITS-1:0];
                     for (int i=0; i< ADC_BANKS; i++) begin
@@ -151,7 +152,7 @@ end
                         pixel_data_d[i*DATA_BITS +: DATA_BITS] = (raw_value > ref_value) ? raw_value - ref_value : 0; //simple thresholding, can be replaced with more complex processing if needed
                     end
                     state_d = OUTPUT_PIXELS;
-                end else if (comp_done) begin //comparison done, step to next reference voltage
+                end else if (comp_done && !last_step) begin //comparison done, step to next reference voltage
                     state_d = RESET_PIXELS;
                 end
             end

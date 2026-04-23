@@ -75,28 +75,37 @@ always_comb begin
         default: state_n = IDLE; 
     endcase
 end
-always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin 
-    if (reset_signal || adc_reset) begin 
-        adc_code <= '0; 
-        adc_o <= '0; 
-        cmp_i <= 1'b0; 
-        adc_done <= 1'b0; 
+always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
+    if (reset_signal) begin
+        adc_code <= '0;
+        adc_o <= '0;
+        cmp_i <= 1'b0;
+        adc_done <= 1'b0;
         adc_ready <= 1'b1;
-        comp_done <= 1'b0; 
-        code_done <= 1'b0; 
+        comp_done <= 1'b0;
+        code_done <= 1'b0;
         send_wait_count <= '0;
-        state <= IDLE; 
-    end
-    else begin 
+        state <= IDLE;
+    end else if (adc_reset) begin
+        // adc_o intentionally kept: scanner reads it on the same reset_adc pulse
+        adc_code        <= '0;
+        cmp_i           <= 1'b0;
+        adc_done        <= 1'b0;
+        adc_ready       <= 1'b1;
+        comp_done       <= 1'b0;
+        code_done       <= 1'b0;
+        send_wait_count <= '0;
+        state           <= IDLE;
+    end else begin
         state <= state_n; 
-        if (state == IDLE) begin 
-            adc_code <= '0; 
-            adc_o <= '0; 
-            cmp_i <= 1'b0; 
-            adc_done <= 1'b0; 
-            adc_ready <= 1'b1;
-            comp_done <= 1'b0; 
+        if (state == IDLE) begin
+            adc_code        <= '0;
+            cmp_i           <= 1'b0;
+            adc_done        <= 1'b0;
+            adc_ready       <= 1'b1;
+            comp_done       <= 1'b0;
             send_wait_count <= '0;
+            // adc_o not cleared: preserved for scanner to read after reset_adc
         end
         else if (state == SAMPLE) begin 
             adc_ready <= 1'b0;
