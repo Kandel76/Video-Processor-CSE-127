@@ -2,13 +2,13 @@
 The current design uses the following values
 
 R=10kOhms
-C=220pF
+C=170pF
 
-time constant = 6.2us
+time constant = 1.7us
 (will be letting it ramp for 5 time constants)
-settle cycles (25MHz clk) = 275 Cycles
+settle cycles (25MHz clk) = 213 Cycles
 
-f(cutoff) = 72.3 kHz
+f(cutoff) = 93.6 kHz
 
 
 PWM Configurations
@@ -19,4 +19,7 @@ Note: The system clock and the PWM clock will be different
 System CLK = 25MHz
 PWM CLK = 100Mhz
 
+
+to run the spice simulation
+''ngspice -b rc_test.spice''
 

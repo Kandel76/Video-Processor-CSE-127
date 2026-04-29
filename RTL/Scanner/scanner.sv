@@ -20,7 +20,7 @@ module scanner #(
     input logic rst_n,   //ACTIVE LOW
 
     //from the ramp controller
-    input logic reset_adc,  //signals when to go to next row since all comparion are done
+    input logic ramp_done,  //signals when to go to next row since all comparion are done
     input logic last_step,  //high on the final ramp step — suppresses RESET_PIXELS so scanner stays for reset_adc
 
     //To the photodiodes -- this module handles reset and integration after each row and each operation of comparators
@@ -38,12 +38,12 @@ module scanner #(
 
     //For memory mapping and control
     input  logic                              frame_start, //FOR ANOTHER MODULE to start a new frame (later used to frame rate control)
-    input  logic                              pixel_ready, //downstream handshake: consumer is ready to accept pixel data
-    output logic [$clog2(ROWS)-1:0]           pixel_row, //current row being output -- used for mapping to pixel array
-    output logic                              pixel_valid,  //used later for mapping
+    input  logic                              row_data_ready, //downstream handshake: consumer is ready to accept pixel data
+    output logic [$clog2(ROWS)-1:0]           current_row, //current row being output -- used for mapping to pixel array
+    output logic                              row_data_valid,  //used later for mapping
     output logic                              row_done, //signal end of a row
     output logic                              frame_done,  //signals when the entire fram is complete
-    output logic [(DATA_BITS*ADC_BANKS)-1:0]  pixel_data
+    output logic [(DATA_BITS*ADC_BANKS)-1:0]  row_data
 );
 
 
@@ -65,8 +65,8 @@ module scanner #(
     //counters
     logic [$clog2(ROWS)-1:0]       row_cnt_d, row_cnt_q;   //row counter
     logic [$clog2(INTEGRATION_CYCLES > RESET_CYCLES ? INTEGRATION_CYCLES : RESET_CYCLES)-1:0] phase_cnt_d, phase_cnt_q; //shared timer for RESET and INTEGRATE phases, choosees width on which is larger
-    logic [DATA_BITS*ADC_BANKS-1:0] pixel_data_d, pixel_data_q; //register to hold pixel data from ADC
-    logic pixel_valid_d, pixel_valid_q; //register to hold pixel valid signal
+    logic [DATA_BITS*ADC_BANKS-1:0] row_data_d, row_data_q; //register to hold row data from ADC
+    logic row_data_valid_d, row_data_valid_q; //register to hold row data valid signal
 
     //extract dark reference and set up for threshold operations                        
     logic [DATA_BITS-1:0] raw_value; //register to hold the raw value from each column for thresholding
@@ -79,14 +79,14 @@ always_ff @(posedge clk) begin
         state_q       <= IDLE;
         row_cnt_q     <= 0;
         phase_cnt_q   <= 0;
-        pixel_data_q  <= 0;
-        pixel_valid_q <= 0;
+        row_data_q       <= 0;
+        row_data_valid_q <= 0;
     end else begin
         state_q       <= state_d;
         row_cnt_q     <= row_cnt_d;
         phase_cnt_q   <= phase_cnt_d;
-        pixel_data_q  <= pixel_data_d;
-        pixel_valid_q <= pixel_valid_d;
+        row_data_q  <= row_data_d;
+        row_data_valid_q <= row_data_valid_d;
     end
 end
 
@@ -96,14 +96,14 @@ end
         state_d      = state_q;
         row_cnt_d    = row_cnt_q;
         phase_cnt_d  = phase_cnt_q;
-        pixel_data_d = pixel_data_q;
+        row_data_d = row_data_q;
         
         
         // Default outputs
         frame_done    = 0;
-        pixel_row     = row_cnt_q;
+        current_row   = row_cnt_q;
         row_done      = 0;
-        pixel_valid_d = pixel_valid_q;
+        row_data_valid_d = row_data_valid_q;
         row_reset     = 0;
         row_enable    = 0;
         adc_read_en   = 0;
@@ -115,7 +115,7 @@ end
                     state_d     = RESET_PIXELS;
                     row_cnt_d   = 0;
                     phase_cnt_d = 0;
-                    pixel_data_d = 0;
+                    row_data_d = 0;
                 end
 
             end
@@ -144,12 +144,12 @@ end
                 adc_start = 1; //start the adc conversion
                 adc_read_en = 1; //enable the adc so it starts reading
 
-                if (reset_adc) begin //check if all comparisons done for this row
+                if (ramp_done) begin //check if all comparisons done for this row
                     // compute pixel daat based on reference for dark current
                     ref_value = adc_data[DATA_BITS-1:0];
                     for (int i=0; i< ADC_BANKS; i++) begin
                         raw_value = adc_data[(i+1)*DATA_BITS +: DATA_BITS]; //extract the data for each column
-                        pixel_data_d[i*DATA_BITS +: DATA_BITS] = (raw_value > ref_value) ? raw_value - ref_value : 0; //simple thresholding, can be replaced with more complex processing if needed
+                        row_data_d[i*DATA_BITS +: DATA_BITS] = (raw_value > ref_value) ? raw_value - ref_value : 0; //simple thresholding, can be replaced with more complex processing if needed
                     end
                     state_d = OUTPUT_PIXELS;
                 end else if (comp_done && !last_step) begin //comparison done, step to next reference voltage
@@ -158,11 +158,11 @@ end
             end
 
             OUTPUT_PIXELS: begin
-                pixel_valid_d = 1;
+                row_data_valid_d = 1;
 
                 //this is for the other modules taking in pixel data
-                if (pixel_ready) begin
-                    pixel_valid_d = 0;
+                if (row_data_ready) begin
+                    row_data_valid_d = 0;
                     state_d = NEXT_ROW; //next state
                 end
             end
@@ -194,8 +194,8 @@ end
     end
 
 
-assign pixel_data = pixel_data_q;
-assign pixel_valid = pixel_valid_q;
+assign row_data = row_data_q;
+assign row_data_valid = row_data_valid_q;
 
 
 endmodule

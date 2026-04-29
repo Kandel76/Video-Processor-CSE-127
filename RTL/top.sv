@@ -16,14 +16,17 @@ module top #(
 
     // scanner frame control
     input  logic                           frame_start,
-    input  logic                           pixel_ready,
 
-    // pixel output bus (to memory / downstream)
+    // pixel output bus (debug/visibility)
     output logic [$clog2(ROWS)-1:0]        pixel_row,
     output logic                           pixel_valid,
     output logic                           row_done,
     output logic                           frame_done,
-    output logic [DATA_BITS*ADC_BANKS-1:0] pixel_data,
+
+    // memory write port (from scanner_to_mem)
+    output logic [15:0]                    mem_waddr,
+    output logic [7:0]                     mem_wdata,
+    input  logic                           mem_wready,
 
     // sensor array row control
     output logic [ROWS-1:0]                row_enable,
@@ -33,6 +36,10 @@ module top #(
     // Reset bridging: scanner/pwm use active-low; ramp_controller active-high
     logic global_reset;
     assign global_reset = ~rst_n;
+
+    // Internal row signals (scanner -> scanner_to_mem)
+    logic [DATA_BITS*ADC_BANKS-1:0] row_data;
+    logic                           row_data_ready;
 
     // Internal signals
 
@@ -93,23 +100,40 @@ module top #(
         .RESET_CYCLES      (RESET_CYCLES),
         .INTEGRATION_CYCLES(INTEGRATION_CYCLES)
     ) u_scanner (
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .reset_adc  (reset_adc),
-        .last_step  (last_step),
-        .row_enable (row_enable),
-        .row_reset  (row_reset_out),
-        .adc_read_en(adc_read_en),
-        .adc_start  (adc_start),
-        .comp_done  (comp_done),
-        .adc_data   (adc_data),
-        .frame_start(frame_start),
-        .pixel_ready(pixel_ready),
-        .pixel_row  (pixel_row),
-        .pixel_valid(pixel_valid),
-        .row_done   (row_done),
-        .frame_done (frame_done),
-        .pixel_data (pixel_data)
+        .clk           (clk),
+        .rst_n         (rst_n),
+        .ramp_done     (reset_adc),
+        .last_step     (last_step),
+        .row_enable    (row_enable),
+        .row_reset     (row_reset_out),
+        .adc_read_en   (adc_read_en),
+        .adc_start     (adc_start),
+        .comp_done     (comp_done),
+        .adc_data      (adc_data),
+        .frame_start   (frame_start),
+        .row_data_ready(row_data_ready),
+        .current_row   (pixel_row),
+        .row_data_valid(pixel_valid),
+        .row_done      (row_done),
+        .frame_done    (frame_done),
+        .row_data      (row_data)
+    );
+
+    // Scanner-to-memory bridge
+    scanner_to_mem #(
+        .ROWS     (ROWS),
+        .COLS     (ADC_BANKS),
+        .DATA_BITS(DATA_BITS)
+    ) u_s2m (
+        .clk           (clk),
+        .rst_n         (rst_n),
+        .row_data_valid(pixel_valid),
+        .row_data      (row_data),
+        .current_row   (pixel_row),
+        .row_data_ready(row_data_ready),
+        .waddr_i       (mem_waddr),
+        .wdata_i       (mem_wdata),
+        .wready_o      (mem_wready)
     );
 
     // Per-column: comparator + sar_adc
