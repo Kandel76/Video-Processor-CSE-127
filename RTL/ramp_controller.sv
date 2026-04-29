@@ -1,7 +1,4 @@
-module ramp_controller #(parameter int adc_wait_cycles = 4,
-parameter int ramp_time = 775,
-parameter int voltage = 4,
-parameter int pulse = 4)(
+module ramp_controller #(parameter int ramp_time = 775)(
     //global clock
     input [0:0] clk,
     //global reset
@@ -34,26 +31,10 @@ typedef enum logic [1:0] {
 
 ramp_fsm state, state_n; 
 
-//Counter to ensure all adcs have settled before moving to the next duty cycle
-logic [$clog2(adc_wait_cycles+1)-1:0] adc_wait;
-logic [0:0] adc_wait_done; 
-//counter to make valid_voltage high for exactly `voltage` cycles
-logic [$clog2(voltage+1)-1:0] voltage_sample_now;
-logic [0:0] valid_high; 
-//counter to pulse reset signal 
-logic [$clog2(pulse)-1:0] pulse_wait;
-logic [0:0] pulse_wait_done; 
-
-
 always_comb begin 
     state_n = state;
-    //done checks for the ramp, adc_wait, and pulse_wait counters
+    //done check for the ramp counter
     ramp_done = (ramp_counter == ramp_time-1); 
-    adc_wait_done = (adc_wait == adc_wait_cycles-1); 
-    pulse_wait_done = (pulse_wait == pulse-1); 
-
-    //this will make valid_voltage high whilst voltage_sample_now is less than voltage
-    valid_high = (state == VOLTAGE_VALID) && (voltage_sample_now < voltage);
 
     case (state)
         IDLE: if (adc_start) begin 
@@ -68,21 +49,16 @@ always_comb begin
             else begin 
                 state_n = VOLTAGE_RAMP; 
             end
-        VOLTAGE_VALID: if (duty_cycle == 4'b1111) begin 
+        VOLTAGE_VALID: if (comp_done && duty_cycle == 4'b1111) begin 
             state_n = FINISH; 
             end
-            else if (comp_done && adc_wait_done) begin 
+            else if (comp_done) begin 
             state_n = VOLTAGE_RAMP;
             end
             else begin 
                 state_n = VOLTAGE_VALID; 
             end
-        FINISH: if (pulse_wait_done) begin 
-            state_n = IDLE; 
-            end
-            else begin 
-                state_n = FINISH; 
-            end
+        FINISH: state_n = IDLE; 
         default: state_n = IDLE; 
         
     endcase
@@ -93,9 +69,6 @@ assign last_step = (state == VOLTAGE_VALID) && (duty_cycle == 4'b1111);
 always_ff @(posedge clk or posedge global_reset) begin
     if (global_reset) begin 
         ramp_counter <= '0;
-        adc_wait <= '0; 
-        pulse_wait <= '0; 
-        voltage_sample_now <= '0; 
         duty_cycle <= '0; 
         valid_voltage <= '0; 
         reset_adc <= '0; 
@@ -103,43 +76,28 @@ always_ff @(posedge clk or posedge global_reset) begin
     end
     else begin 
         state <= state_n; 
-        // Default low each cycle; only assert during the intended pulse window.
         valid_voltage <= '0;
         reset_adc <= '0;
         if (state == IDLE) begin 
             ramp_counter <= '0;
-              adc_wait <= '0; 
-            pulse_wait <= '0; 
-            voltage_sample_now <= '0; 
             duty_cycle <= '0; 
         end
         else if (state == VOLTAGE_RAMP) begin 
             if (state_n == VOLTAGE_VALID) begin
                 ramp_counter <= '0;
+                valid_voltage <= '1;
             end
             else begin
                 ramp_counter <= ramp_counter + 1'b1;
             end
-            adc_wait <= '0; 
-            voltage_sample_now <= '0; 
         end
         else if (state == VOLTAGE_VALID) begin 
-            valid_voltage <= valid_high;
-            if (comp_done && !adc_wait_done) begin 
-                adc_wait <= adc_wait + 1'b1; 
-            end
             if (state_n == VOLTAGE_RAMP) begin
                 duty_cycle <= duty_cycle + 1'b1; 
-            end
-            if (voltage_sample_now < voltage) begin
-                voltage_sample_now <= voltage_sample_now + 1'b1;
             end
         end
         else if (state == FINISH) begin 
             reset_adc <= '1;
-            if (!pulse_wait_done) begin
-                pulse_wait <= pulse_wait + 1'b1; 
-            end
         end
 
     end 

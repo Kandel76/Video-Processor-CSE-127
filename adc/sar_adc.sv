@@ -1,7 +1,5 @@
-//New ADC design based on 4 state-machine
-module sar_adc #(
-    parameter int SEND_WAIT_CYCLES = 1
-) (
+//New ADC design based on 5 state-machine
+module sar_adc (
     //global clk
     input logic [0:0] clk,
     //comparator input
@@ -25,27 +23,25 @@ module sar_adc #(
     
 );
 //State machine 
-typedef enum logic [1:0] {
-    IDLE = 2'b00, //Initial State, awaits Scan Controller and PWM inputs
-    SAMPLE = 2'b01, //Samples cmp_o while Valid_voltage high
-    UPDATE = 2'b10, //Updates adc code based on cmp_o
-    SEND = 2'b11 //Sends code to the Scan Controller
+typedef enum logic [2:0] {
+    IDLE = 3'b000, //Initial State, awaits Scan Controller and PWM inputs
+    SAMPLE = 3'b001, //Samples cmp_o while Valid_voltage high
+    UPDATE = 3'b010, //Updates adc code based on cmp_o
+    WAIT = 3'b011, //Waits for the next valid_voltage high
+    SEND = 3'b100 //Sends code to the Scan Controller
 } adc_fsm;
 
 adc_fsm state_n, state; 
 
 //Signals Used Internally
 logic [3:0] adc_code; 
-//code_done here ensures that we only give out 1 4-bit code per row. 
-logic [0:0] cmp_i, voltage_signal, code_done; 
-//counter to wait in the send state
-logic [$clog2(SEND_WAIT_CYCLES)-1:0] send_wait_count;
+logic [0:0] cmp_i, voltage_signal; 
 //FSM logic 
 always_comb begin 
     state_n = state; 
     voltage_signal = ~valid_voltage; 
     case (state)
-        IDLE: if ((read_en && valid_voltage) && (!code_done)) begin 
+        IDLE: if (read_en && valid_voltage) begin 
             state_n = SAMPLE; 
         end
             else begin 
@@ -57,21 +53,19 @@ always_comb begin
             else begin 
                 state_n = SAMPLE; 
             end
-        UPDATE: if ((cmp_i != 0) && (adc_code != 4'hf) && (valid_voltage)) begin 
-            state_n = SAMPLE; 
-        end
-            else if ((cmp_i == 0) || (adc_code == 4'hf)) begin 
+        UPDATE: if ((cmp_i == 0) || (adc_code == 4'hf)) begin 
                 state_n = SEND; 
             end
             else begin 
-                state_n = UPDATE; 
+                state_n = WAIT; 
             end
-        SEND: if (send_wait_count == SEND_WAIT_CYCLES - 1) begin
-            state_n = IDLE;
-        end
-            else begin
-                state_n = SEND;
+        WAIT: if (valid_voltage) begin 
+            state_n = SAMPLE; 
             end
+            else begin 
+                state_n = WAIT; 
+            end 
+        SEND: state_n = SEND; 
         default: state_n = IDLE; 
     endcase
 end
@@ -83,51 +77,35 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
         adc_done <= 1'b0;
         adc_ready <= 1'b1;
         comp_done <= 1'b0;
-        code_done <= 1'b0;
-        send_wait_count <= '0;
         state <= IDLE;
     end else if (adc_reset) begin
-        // adc_o intentionally kept: scanner reads it on the same reset_adc pulse
         adc_code        <= '0;
         cmp_i           <= 1'b0;
         adc_done        <= 1'b0;
         adc_ready       <= 1'b1;
         comp_done       <= 1'b0;
-        code_done       <= 1'b0;
-        send_wait_count <= '0;
         state           <= IDLE;
     end else begin
         state <= state_n; 
+        // Default outputs
+        adc_ready <= 1'b0;
+        adc_done  <= 1'b0;
+        comp_done <= 1'b0;
         if (state == IDLE) begin
             adc_code        <= '0;
             cmp_i           <= 1'b0;
-            adc_done        <= 1'b0;
             adc_ready       <= 1'b1;
-            comp_done       <= 1'b0;
-            send_wait_count <= '0;
-            // adc_o not cleared: preserved for scanner to read after reset_adc
         end
         else if (state == SAMPLE) begin 
-            adc_ready <= 1'b0;
-            adc_done  <= 1'b0;
             cmp_i <= cmp_o;
-            comp_done <= 1'b0; 
-            send_wait_count <= '0;
         end
         else if (state == UPDATE) begin 
-            adc_ready <= 1'b0;
-            adc_done  <= 1'b0;
             comp_done <= 1'b1;
             adc_code <= adc_code + {3'b0, cmp_i}; 
-            send_wait_count <= '0;
         end
         else if (state == SEND) begin 
-            adc_ready <= 1'b0;
             adc_done <= 1'b1; 
-            comp_done <= 1'b0;
             adc_o <= adc_code; 
-            code_done <= 1'b1; 
-            send_wait_count <= send_wait_count + 1'b1;
         end
     end
 end
