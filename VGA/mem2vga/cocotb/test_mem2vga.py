@@ -99,6 +99,9 @@ async def mem_write(dut, imagefile2):
             byte1 = dafile.read(1)
             iterator = iterator + 1
 
+            for _ in range(6):
+                await FallingEdge(dut.clk)
+
             await RisingEdge(dut.wready_o)
 
         print("mem_write finished overwriting memory")
