@@ -3,12 +3,6 @@
 
 `default_nettype none
 
-`include "../../../VGA/mem2vga/mem2vga.v"
-`include "../../../VGA/mem2vga/double_buffer.v"
-`include "../../../VGA/mem2vga/sync_manager.v"
-`include "../../../VGA/hitachimem/hmem_access.v"
-
-
 module chip_core #(
     parameter NUM_INPUT_PADS,
     parameter NUM_BIDIR_PADS,

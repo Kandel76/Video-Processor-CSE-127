@@ -28,6 +28,10 @@ DESIGN_NAME: chip_top
 VERILOG_FILES:
 - dir::../src/chip_top.sv
 - dir::../src/chip_core.sv
+- dir::../../../VGA/mem2vga/mem2vga.v
+- dir::../../../VGA/hitachimem/hmem_access.v
+- dir::../../../VGA/mem2vga/double_buffer.v
+- dir::../../../VGA/mem2vga/sync_manager.v
 
 # Enable plugin for better SystemVerilog support
 # USE_SLANG: True
