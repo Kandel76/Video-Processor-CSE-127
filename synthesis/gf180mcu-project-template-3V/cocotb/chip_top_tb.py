@@ -14,7 +14,7 @@ from cocotb_tools.runner import get_runner
 sim = os.getenv("SIM", "icarus")
 pdk_root = os.getenv("PDK_ROOT", Path("~/.ciel").expanduser())
 pdk = os.getenv("PDK", "gf180mcuD")
-scl = os.getenv("SCL", "gf180mcu_fd_sc_mcu7t5v0")
+scl = os.getenv("SCL", "gf180mcu_fd_sc_mcu7t3v3")
 gl = os.getenv("GL", False)
 slot = os.getenv("SLOT", "1x1")
 
@@ -93,7 +93,9 @@ def chip_top_runner():
     if gl:
         # SCL models
         sources.append(Path(pdk_root) / pdk / "libs.ref" / scl / "verilog" / f"{scl}.v")
-        sources.append(Path(pdk_root) / pdk / "libs.ref" / scl / "verilog" / "primitives.v")
+        primitives = Path(pdk_root) / pdk / "libs.ref" / scl / "verilog" / "primitives.v"
+        if primitives.exists():
+            sources.append(primitives)
 
         # We use the powered netlist
         sources.append(proj_path / f"../final/pnl/{hdl_toplevel}.pnl.v")
@@ -108,8 +110,8 @@ def chip_top_runner():
         Path(pdk_root) / pdk / "libs.ref/gf180mcu_fd_io/verilog/gf180mcu_fd_io.v",
         Path(pdk_root) / pdk / "libs.ref/gf180mcu_fd_io/verilog/gf180mcu_ws_io.v",
         
-        # SRAM macros
-        Path(pdk_root) / pdk / "libs.ref/gf180mcu_fd_ip_sram/verilog/gf180mcu_fd_ip_sram__sram512x8m8wm1.v",
+        # SRAM macros (3.3V)
+        proj_path / "../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram512x8m8wm1/gf180mcu_ocd_ip_sram__sram512x8m8wm1.v",
         
         # Custom IP
         proj_path / "../ip/gf180mcu_ws_ip__id/vh/gf180mcu_ws_ip__id.v",

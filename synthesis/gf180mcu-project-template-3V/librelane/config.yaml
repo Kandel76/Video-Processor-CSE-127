@@ -100,11 +100,11 @@ PDN_CORE_HORIZONTAL_LAYER: Metal3
 # However, it is recommended to fix or carefully review all violations.
 ERROR_ON_MAGIC_DRC: False
 
-# Prevent false positive DRC errors in I/O cells
+# Prevent false positive DRC errors in I/O cells and SRAMs
 MAGIC_GDS_FLATGLOB:
 # For contacts
 - "*_CDNS_*"
-# Foundry provided SRAMs
+# 3.3V SRAMs (based on foundry SRAM layout)
 - "*$$*"
 - "M1_N*"
 - "M1_P*"
@@ -112,13 +112,14 @@ MAGIC_GDS_FLATGLOB:
 - "M3_M2*"
 - "nmos_5p0*"
 - "nmos_1p2*"
+- "nmos_3p3*"
 - "pmos_5p0*"
 - "pmos_1p2*"
+- "pmos_3p3*"
 - "via1_*"
 - "ypass_gate*"
 - "G_ring_*"
-# These additional cells must be flattened to get rid of 3.3V devices
-# (DUALGATE drawn into high-level cells)
+# SRAM internal cells that may contain DUALGATE layers
 - "dcap_103*"
 - "din_*"
 - "mux821_*"
@@ -174,20 +175,18 @@ MACROS:
         location: ["expr::$DIE_AREA[2] + -169.25", "expr::$DIE_AREA[3] + -169.25"]
         orientation: N
 
-  gf180mcu_fd_ip_sram__sram512x8m8wm1:
+  gf180mcu_ocd_ip_sram__sram512x8m8wm1:
     gds:
-      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/gds/gf180mcu_fd_ip_sram__sram512x8m8wm1.gds
+      - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram512x8m8wm1/gf180mcu_ocd_ip_sram__sram512x8m8wm1.gds
     lef:
-      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lef/gf180mcu_fd_ip_sram__sram512x8m8wm1.lef
+      - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram512x8m8wm1/gf180mcu_ocd_ip_sram__sram512x8m8wm1.lef
     vh:
-      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/verilog/gf180mcu_fd_ip_sram__sram512x8m8wm1__blackbox.v
+      - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram512x8m8wm1/gf180mcu_ocd_ip_sram__sram512x8m8wm1.blackbox.v
     lib:
-      "*_tt_025C_5v00":
-        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__tt_025C_5v00.lib
-      "*_ff_n40C_5v50":
-        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__ff_n40C_5v50.lib
-      "*_ss_125C_4v50":
-        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__ss_125C_4v50.lib
+      "*_tt_025C_3v30":
+        - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram512x8m8wm1/gf180mcu_ocd_ip_sram__sram512x8m8wm1__tt_025C_3v30.lib
+      "*_ff_n40C_3v60":
+        - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram512x8m8wm1/gf180mcu_ocd_ip_sram__sram512x8m8wm1__ff_n40C_3v60.lib
     instances:
       # Make sure to specify the SRAMs in pdn_cfg.tcl
       i_chip_core.sram_0:
