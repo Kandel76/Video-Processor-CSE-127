@@ -11,6 +11,7 @@ async def reset_dut(dut):
     dut.read_en.value = 0
     dut.cmp_o.value = 0
     dut.valid_voltage.value = 0
+    dut.adc_reset.value = 0
     dut.reset_signal.value = 1
 
     await ClockCycles(dut.clk, 2)
@@ -41,17 +42,24 @@ async def do_conversion_step(dut, cmp_value=1, first_step=False):
     dut.valid_voltage.value = 0
     await RisingEdge(dut.clk)
 
-async def run_target_code(dut, target_code): 
-    #increment for target_code steps, then stop with cmp_o = 0
-    for i in range(target_code):
-        await do_conversion_step(dut, cmp_value = 1, first_step = (i == 0))
-        
-    await do_conversion_step(dut, cmp_value = 0, first_step = (target_code == 0))
-    
+#model PWM + comparator behavior using threshold
+async def run_pixel_model(dut, pixel_value):
+    """
+    models blue box: pwm + RC filter + comparator + pixel array
+    threshold represents the PWM duty step
+    """
+    for threshold in range(16):
+        cmp_value = 1 if pixel_value > threshold else 0
+
+        await do_conversion_step(dut, cmp_value = cmp_value, first_step=(threshold==0))
+
+        if cmp_value == 0:
+            break
+
     await ClockCycles(dut.clk, 4)
-    
+
     got = int(dut.adc_o.value)
-    assert got == target_code, f"!!! ERROR: expected value {target_code}, got value {int(got)}"
+    assert got == pixel_value, f"!!! ERROR: pixel={pixel_value},expected ADC {pixel_value}, got{got}"
 
 # tests -------------------------------------------
 
@@ -106,7 +114,7 @@ async def test_sar_adc_static_img(dut):
         target_code = int(pixel)
         
         await reset_dut(dut)
-        await run_target_code(dut, target_code)
+        await run_pixel_model(dut, target_code)
         
         got = int(dut.adc_o.value)
         
@@ -115,8 +123,3 @@ async def test_sar_adc_static_img(dut):
         
     await ClockCycles(dut.clk, 6)
 
-
-
-
-
-                      
