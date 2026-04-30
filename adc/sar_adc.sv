@@ -10,7 +10,7 @@ module sar_adc (
     input logic [0:0] reset_signal,
     //row reset
     input logic [0:0] adc_reset,
-    //Sample Window from PWM
+    //Sample Window from Ramp
     input logic [0:0] valid_voltage,
     //approximated diode voltage
     output logic [3:0] adc_o,
@@ -35,11 +35,11 @@ adc_fsm state_n, state;
 
 //Signals Used Internally
 logic [3:0] adc_code; 
-logic [0:0] cmp_i, voltage_signal; 
+logic [0:0] cmp_i, voltage_invalid; 
 //FSM logic 
 always_comb begin 
     state_n = state; 
-    voltage_signal = ~valid_voltage; 
+    voltage_invalid = ~valid_voltage; 
     case (state)
         IDLE: if (read_en && valid_voltage) begin 
             state_n = SAMPLE; 
@@ -47,7 +47,7 @@ always_comb begin
             else begin 
                 state_n = IDLE;
             end
-        SAMPLE: if (voltage_signal) begin 
+        SAMPLE: if (voltage_invalid) begin 
             state_n = UPDATE;
         end
             else begin 
@@ -78,14 +78,16 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
         adc_ready <= 1'b1;
         comp_done <= 1'b0;
         state <= IDLE;
-    end else if (adc_reset) begin
+    end 
+    else if (adc_reset) begin
         adc_code        <= '0;
         cmp_i           <= 1'b0;
         adc_done        <= 1'b0;
         adc_ready       <= 1'b1;
         comp_done       <= 1'b0;
         state           <= IDLE;
-    end else begin
+    end 
+    else begin
         state <= state_n; 
         // Default outputs
         adc_ready <= 1'b0;
