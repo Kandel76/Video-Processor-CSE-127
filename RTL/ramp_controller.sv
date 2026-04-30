@@ -25,7 +25,7 @@ logic [0:0] ramp_done;
 typedef enum logic [1:0] {
     IDLE = 2'b00, //Initial State, waits for adc_start 
     VOLTAGE_RAMP = 2'b01, //will ramp up for 775 cycles for now
-    VOLTAGE_VALID = 2'b10, //sends a signal for the adc to sample, waits for comp_done
+    WAIT = 2'b10, //sends a signal for the adc to sample, waits for comp_done
     FINISH = 2'b11 //once we have done this 16 times we end the row 
 } ramp_fsm;
 
@@ -44,19 +44,19 @@ always_comb begin
             state_n = IDLE; 
             end
         VOLTAGE_RAMP: if (ramp_done) begin 
-            state_n = VOLTAGE_VALID;
+            state_n = WAIT;
             end
             else begin 
                 state_n = VOLTAGE_RAMP; 
             end
-        VOLTAGE_VALID: if (comp_done && duty_cycle == 4'b1111) begin 
+        WAIT: if (comp_done && duty_cycle == 4'b1111) begin 
             state_n = FINISH; 
             end
             else if (comp_done) begin 
             state_n = VOLTAGE_RAMP;
             end
             else begin 
-                state_n = VOLTAGE_VALID; 
+                state_n = WAIT; 
             end
         FINISH: state_n = IDLE; 
         default: state_n = IDLE; 
@@ -64,7 +64,7 @@ always_comb begin
     endcase
 end
 
-assign last_step = (state == VOLTAGE_VALID) && (duty_cycle == 4'b1111);
+assign last_step = (state == WAIT) && (duty_cycle == 4'b1111);
 
 always_ff @(posedge clk or posedge global_reset) begin
     if (global_reset) begin 
@@ -83,7 +83,7 @@ always_ff @(posedge clk or posedge global_reset) begin
             duty_cycle <= '0; 
         end
         else if (state == VOLTAGE_RAMP) begin 
-            if (state_n == VOLTAGE_VALID) begin
+            if (state_n == WAIT) begin
                 ramp_counter <= '0;
                 valid_voltage <= '1;
             end
@@ -91,7 +91,7 @@ always_ff @(posedge clk or posedge global_reset) begin
                 ramp_counter <= ramp_counter + 1'b1;
             end
         end
-        else if (state == VOLTAGE_VALID) begin 
+        else if (state == WAIT) begin 
             if (state_n == VOLTAGE_RAMP) begin
                 duty_cycle <= duty_cycle + 1'b1; 
             end
