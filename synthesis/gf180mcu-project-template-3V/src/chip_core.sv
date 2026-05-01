@@ -49,33 +49,53 @@ module chip_core #(
     logic _unused;
     assign _unused = &bidir_in;
 
-    mem2vga mymem2vga (
-        .clk(clk),
-        .reset(~rst_n),
+    logic [NUM_BIDIR_PADS-1:0] count;
 
-        // VGA Interface
-        .hsync_o(bidir_out[0]), 
-        .vsync_o(bidir_out[1]),
-        .pixel_o(bidir_out[13:2]), // 12 bit RGB value
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
+            count <= '0;
+        end else begin
+            if (&input_in) begin
+                count <= count + 1;
+            end
+        end
+    end
 
-        // // write interface
-        // input [15:0] waddr_i,   // 320*240 = 76800 pixels. 
-        //                         // 2 pixels per address -> 38400 addresses
-        //                         // clog2 -> 16 address bits
-        // input [7:0] wdata_i,
-        // .[0:0] wready_o,
+    logic [7:0] sram_0_out;
 
-        //memory interface
-        .addr_o(bidir_out[27:14]),   // each chip only has 15 address bits
-        .nCS1_o(bidir_out[28]),    // top (16th) bit of address
-        .nCS2_o(bidir_out[29]),    // !(CS1)
-        .nOE_o(bidir_out[30]),       // output enable. same for both chips
-        .nWE_o(bidir_out[31]),       // write enable.  same for both chips
+    gf180mcu_ocd_ip_sram__sram512x8m8wm1 sram_0 (
+        `ifdef USE_POWER_PINS
+        .VDD  (VDD),
+        .VSS  (VSS),
+        `endif
 
-        .data_o(bidir_out[39:32]),
-        .data_i(input_in[7:0]) 
+        .CLK  (clk),
+        .CEN  (1'b1),
+        .GWEN (1'b0),
+        .WEN  (8'b0),
+        .A    ('0),
+        .D    ('0),
+        .Q    (sram_0_out)
     );
 
+    logic [7:0] sram_1_out;
+
+    gf180mcu_ocd_ip_sram__sram512x8m8wm1 sram_1 (
+        `ifdef USE_POWER_PINS
+        .VDD  (VDD),
+        .VSS  (VSS),
+        `endif
+
+        .CLK  (clk),
+        .CEN  (1'b1),
+        .GWEN (1'b0),
+        .WEN  (8'b0),
+        .A    ('0),
+        .D    ('0),
+        .Q    (sram_1_out)
+    );
+
+    assign bidir_out = count ^ {24'd0, sram_0_out, sram_1_out};
 
 endmodule
 

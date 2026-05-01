@@ -14,7 +14,7 @@ from cocotb_tools.runner import get_runner
 sim = os.getenv("SIM", "icarus")
 pdk_root = os.getenv("PDK_ROOT", Path("~/.ciel").expanduser())
 pdk = os.getenv("PDK", "gf180mcuD")
-scl = os.getenv("SCL", "gf180mcu_fd_sc_mcu7t3v3")
+scl = os.getenv("SCL", "gf180mcu_as_sc_mcu7t3v3")
 gl = os.getenv("GL", False)
 slot = os.getenv("SLOT", "1x1")
 

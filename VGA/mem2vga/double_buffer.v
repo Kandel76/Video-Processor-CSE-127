@@ -206,7 +206,7 @@ module double_buffer (
     end
     
     //instantiate on-chip memory modules ======================================
-    gf180mcu_ocd_ip_sram__sram512x8m8wm1 buf1(
+    gf180mcu_ocd_ip_sram__sram256x8m8wm1 buf1(
         .CLK(clk),
         .CEN(buf1_cen_w),
         .GWEN(buf1_gwen_w),
@@ -215,7 +215,7 @@ module double_buffer (
         .D(buf1_wdata_w), //8 bits
         .Q(buf1_rdata_w) //8 bits
     );
-    gf180mcu_ocd_ip_sram__sram512x8m8wm1 buf2(
+    gf180mcu_ocd_ip_sram__sram256x8m8wm1 buf2(
         .CLK(clk),
         .CEN(buf2_cen_w),
         .GWEN(buf2_gwen_w),
