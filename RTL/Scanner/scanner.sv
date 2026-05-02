@@ -141,8 +141,9 @@ end
 
             WAIT_CONVERT: begin
                 row_enable[row_cnt_q] = 1; //keep row enabled
-                adc_start = 1; //start the adc conversion
                 adc_read_en = 1; //enable the adc so it starts reading
+                adc_start = !ramp_done; // suppress adc_start the cycle ramp_done fires to prevent
+                                        // the ramp controller from spuriously restarting in IDLE
 
                 if (ramp_done) begin //check if all comparisons done for this row
                     // compute pixel daat based on reference for dark current
