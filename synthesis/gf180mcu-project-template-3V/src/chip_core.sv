@@ -61,41 +61,68 @@ module chip_core #(
         end
     end
 
-    logic [7:0] sram_0_out;
+    //VGA interface wires
+    wire [0:0] hsync_o, vsync_o;
+    wire [11:0] pixel_o;
+    assign bidir_out[0] = hsync_o;
+    assign bidir_out[1] = vsync_o;
+    assign bidir_out[13:2] = pixel_o;
 
-    gf180mcu_ocd_ip_sram__sram512x8m8wm1 sram_0 (
-        `ifdef USE_POWER_PINS
-        .VDD  (VDD),
-        .VSS  (VSS),
-        `endif
+    //write interface wires
+    //these are currently unused, so I will be using dont_touch. I'm not sure if this is good practice.
+    //we'll see if this is the correct way to use this, Verilog's documentation is a bit unclear.
+    (* dont_touch = "yes" *) wire [15:0] waddr_i;
+    (* dont_touch = "yes" *) wire [7:0] wdata_i;
+    (* dont_touch = "yes" *) wire [0:0] wvalid_i;
+    (* dont_touch = "yes" *) wire [0:0] wready_o;
+    assign waddr_i = 0;
+    assign wdata_i = 0;
+    assign wvalid_i = 0;
 
-        .CLK  (clk),
-        .CEN  (1'b1),
-        .GWEN (1'b0),
-        .WEN  (8'b0),
-        .A    ('0),
-        .D    ('0),
-        .Q    (sram_0_out)
+    //memory interface wires
+    wire [14:0] addr_o;
+    wire [0:0] nCS1_o;
+    wire [0:0] nCS2_o;
+    wire [0:0] nOE_o;
+    wire [0:0] nWE_o;
+    assign bidir_out[28:14] = addr_o;
+    assign bidir_out[29] = nCS1_o;
+    assign bidir_out[30] = nCS2_o;
+    assign bidir_out[31] = nOE_o;
+    assign bidir_out[32] = nWE_o;
+    wire [7:0] data_o;
+    wire [7:0] data_i;
+    assign bidir_out[40:33] = data_o;
+    assign data_i = bidir_in[40:33];
+
+    mem2vga mymem2vga (
+        .clk(clk),
+        .reset(~rst_n),
+
+        //VGA interface
+        .hsync_o(hsync_o),
+        .vsync_o(vsync_o),
+        .pixel_o(pixel_o),  //12 bits
+
+        //write interface
+        .waddr_i(waddr_i),  //16 bits
+        .wdata_i(wdata_i),  //8 bits
+        .wvalid_i(wvalid_i),
+        .wready_o(wready_o),
+
+        //memory interface
+        .addr_o(addr_o),    //15 bits
+        .nCS1_o(nCS1_o),
+        .nCS2_o(nCS2_o),
+        .nOE_o(nOE_o),
+        .nWE_o(nWE_o),
+
+        .data_o(data_o),    //8 bits
+        .data_i(data_i)     //8 bits. Only input pins other than clk and reset
     );
 
-    logic [7:0] sram_1_out;
 
-    gf180mcu_ocd_ip_sram__sram512x8m8wm1 sram_1 (
-        `ifdef USE_POWER_PINS
-        .VDD  (VDD),
-        .VSS  (VSS),
-        `endif
 
-        .CLK  (clk),
-        .CEN  (1'b1),
-        .GWEN (1'b0),
-        .WEN  (8'b0),
-        .A    ('0),
-        .D    ('0),
-        .Q    (sram_1_out)
-    );
-
-    assign bidir_out = count ^ {24'd0, sram_0_out, sram_1_out};
 
 endmodule
 
