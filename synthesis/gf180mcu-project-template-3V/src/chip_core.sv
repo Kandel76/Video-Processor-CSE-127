@@ -39,7 +39,8 @@ module chip_core #(
     assign input_pd = '0;
 
     // Set the bidir as output
-    assign bidir_oe = '1;
+    // assign bidir_oe = '1;
+    assign bidir_oe = {{8{~nWE_o}}, {34{1}}}; //bottom 34 bits are always out, top 8 bits are sometimes in.
     assign bidir_cs = '0;
     assign bidir_sl = '0;
     assign bidir_ie = ~bidir_oe;
@@ -61,6 +62,7 @@ module chip_core #(
         end
     end
 
+    // MY CODE ================================================================
     //VGA interface wires
     wire [0:0] hsync_o, vsync_o;
     wire [11:0] pixel_o;
