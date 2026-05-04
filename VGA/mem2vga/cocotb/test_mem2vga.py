@@ -92,6 +92,7 @@ async def mem_write(dut, imagefile2):
             # turn bytes into hex and then give to write interface
             # {upper4, 4'b0000} | {4'b000, lower4}
             dut.waddr_i.value = iterator
+            dut.wvalid_i.value = 1 #need to add line that turns this back off
             dut.wdata_i.value = (int.from_bytes(byte1, "little") & 0xf0) | ((int.from_bytes(byte2, "little") >> 4) & 0x0f)
 
             byte1 = dafile.read(1)
@@ -99,10 +100,17 @@ async def mem_write(dut, imagefile2):
             byte1 = dafile.read(1)
             iterator = iterator + 1
 
-            for _ in range(6):
+            # wvalid should only be on for 1 cycle
+            await RisingEdge(dut.clk)
+            dut.wvalid_i.value = 0
+
+            # add extra delay to simulate a slower readout
+            for _ in range(1):
                 await FallingEdge(dut.clk)
 
+            # wait for next ready signal
             await RisingEdge(dut.wready_o)
+
 
         print("mem_write finished overwriting memory")
     
@@ -214,6 +222,7 @@ async def reset_test(dut):
     # set values to zero
     dut.waddr_i.value = 0
     dut.wdata_i.value = 0
+    dut.wvalid_i.value = 0
     dut.data_i.value = 0xee
 
     await FallingEdge(dut.clk)

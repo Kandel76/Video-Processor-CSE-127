@@ -6,6 +6,7 @@ module hmem_access (
     // input [0:0] wvalid_i,
     input [15:0] waddr_i, //320*240 = 76800 pixels. 2 pixels per address -> 38400 addresses. clog2 -> 16 address bits
     input [7:0] wdata_i,
+    input [0:0] wvalid_i,
     output [0:0] wready_o,
 
     //read interface
@@ -35,7 +36,7 @@ module hmem_access (
 
     wire [15:0] active_address;
 
-    logic [0:0] rvalid_r;
+    logic [0:0] rvalid_r, wvalid_r;
     logic [16:0] raddr_r, waddr_r;
     logic [7:0] wdata_r, rdata_r;
 
@@ -60,7 +61,8 @@ module hmem_access (
     // determine whether we're reading or writing =============================
     // alternate every 3 cycles
     assign reading_w = reading_l;
-    assign writing_w = (~reading_l) & ~reset;
+    //assign writing_w = (~reading_l) & ~reset;
+    assign writing_w = ~(reading_l | reset) & (wvalid_r); //write iff not a reading or reset cycle and wvalid was 1
     assign flipping_w = cyc3_l[1];
 
     always @(posedge clk) begin
@@ -78,9 +80,10 @@ module hmem_access (
     //buffering addresses and data ============================================
     always @(posedge clk) begin
         if (reset) begin
-            raddr_r <= 0;
             waddr_r <= 0;
             wdata_r <= 0;
+            wvalid_r <= 0;
+            raddr_r <= 0;
             rdata_r <= 0;
             rvalid_r <= 1'b0;
         end else if (flipping_w) begin
@@ -89,6 +92,7 @@ module hmem_access (
                 rdata_r <= data_i;
                 waddr_r <= waddr_i;
                 wdata_r <= wdata_i;
+                wvalid_r <= wvalid_i;
             end else begin //ending a write cycle
                 rvalid_r <= 1'b0;
                 raddr_r <= raddr_i;

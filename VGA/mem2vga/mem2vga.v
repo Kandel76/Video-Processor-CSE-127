@@ -15,6 +15,7 @@ module mem2vga
                             // 2 pixels per address -> 38400 addresses
                             // clog2 -> 16 address bits
     input [7:0] wdata_i,
+    input [0:0] wvalid_i,
     output [0:0] wready_o,
 
     //memory interface
@@ -104,6 +105,7 @@ module mem2vga
         //write interface (directly to module output)
         .waddr_i(waddr_i),      // 16 bits
         .wdata_i(wdata_i),      // 8 bits
+        .wvalid_i(wvalid_i),    // 1 bit
         .wready_o(wready_o),    // 1 bit
 
         //read interface

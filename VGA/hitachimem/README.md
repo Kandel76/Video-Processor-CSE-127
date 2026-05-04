@@ -1,6 +1,6 @@
 # Hitachi Memory Simulation
 
-This is my attempt to create a basic logic representation of the Hitachi memory bus/controller we are using.
+This is an RTL interface for the off-chip memory chip we are using, the HITACHI HM62256LP-70
 
 Documentation: https://www.jameco.com/Jameco/Products/ProdDS/82472.pdf
 
