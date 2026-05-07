@@ -53,7 +53,7 @@ always_comb begin
             else begin 
                 state_n = SAMPLE; 
             end
-        UPDATE: if ((cmp_i == 0) || (adc_code == 4'hf)) begin 
+        UPDATE: if (adc_code == 4'hf) begin 
                 state_n = SEND; 
             end
             else begin 
@@ -104,10 +104,10 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
         else if (state == UPDATE) begin 
             comp_done <= 1'b1;
             adc_code <= adc_code + {3'b0, cmp_i}; 
+            adc_o <= adc_code + {3'b0, cmp_i};
         end
         else if (state == SEND) begin 
             adc_done <= 1'b1; 
-            adc_o <= adc_code; 
         end
     end
 end
