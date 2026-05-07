@@ -52,9 +52,10 @@ module scanner_to_mem #(
     end
 
     // Packed byte -- two consecutive 4-bit pixels -> one 8-bit word
-    // byte i = pixels [2*i+1:2*i]  =>  row_data_q[8*i+7 : 8*i]
+    // Reader displays [7:4] before [3:0], so even pixel goes to [7:4], odd to [3:0]
     assign waddr_i = (row_q * BYTES_PER_ROW) + byte_idx_q;
-    assign wdata_i = row_data_q[byte_idx_q * 8 +: 8];
+    assign wdata_i = {row_data_q[byte_idx_q * 8 +: 4],      // even pixel (2i)   -> [7:4]
+                      row_data_q[byte_idx_q * 8 + 4 +: 4]}; // odd pixel  (2i+1) -> [3:0]
 
     always_comb begin
         state_d    = state_q;
