@@ -12,9 +12,9 @@ UPDATE = 0b010
 WAIT = 0b011
 SEND = 0b100
 
-# helpers ---------------------------------------
+# helper functions
 
-
+#state machine states
 def state_name(v):
     return {
         IDLE: "IDLE",
@@ -33,7 +33,7 @@ def assert_state(dut, expected, msg=""):
     got = get_state(dut)
     assert got == expected, f"{msg} expected {state_name(expected)}, got {state_name(got)}"
 
-
+#resets adc
 async def reset_dut(dut):
     dut.read_en.value = 0
     dut.cmp_o.value = 0
@@ -51,9 +51,8 @@ async def reset_dut(dut):
     assert int(dut.adc_ready.value) == 1
     assert int(dut.comp_done.value) == 0
 
-
 async def do_conversion_step(dut, cmp_value=1, first_step=False):
-    # one sample / update step
+    #comparator high 1, (does 1 cycle of this here)
     # first_step=1 means leave IDLE using read_en
     if first_step:
         assert_state(dut, IDLE, "First conversion step should begin in IDLE:")
@@ -85,10 +84,7 @@ async def do_conversion_step(dut, cmp_value=1, first_step=False):
 
 # model PWM + comparator behavior using threshold
 async def run_pixel_model(dut, pixel_value):
-    """
-    models blue box: pwm + RC filter + comparator + pixel array
-    threshold represents the PWM duty step
-    """
+   
     for threshold in range(16):
         cmp_value = 1 if pixel_value > threshold else 0
         await do_conversion_step(dut, cmp_value=cmp_value, first_step=(threshold == 0))
@@ -111,10 +107,11 @@ async def drive_to_send(dut):
     assert_state(dut, SEND, "Expected SEND at terminal count:")
 
 
-# tests -------------------------------------------
+# tests follow below
 
 
 @cocotb.test()
+#test checks the adc final value
 async def test_sar_adc_final_result(dut):
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
 
@@ -177,6 +174,7 @@ async def test_sar_adc_static_img(dut):
 
 
 @cocotb.test()
+#tests state transitions
 async def test_sar_adc_fsm_transitions(dut):
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
     await reset_dut(dut)
@@ -218,6 +216,7 @@ async def test_sar_adc_fsm_transitions(dut):
 
 
 @cocotb.test()
+#sticky (meaning we are stuck there)
 async def test_sar_adc_send_state_sticky(dut):
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
     await reset_dut(dut)
@@ -232,6 +231,7 @@ async def test_sar_adc_send_state_sticky(dut):
 
 
 @cocotb.test()
+#reset whilst we are working (this should only happen if we manually reset our chip)
 async def test_resets_from_active_states(dut):
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
     await reset_dut(dut)
