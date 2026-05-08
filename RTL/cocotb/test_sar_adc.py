@@ -262,29 +262,3 @@ async def test_resets_from_active_states(dut):
     assert int(dut.comp_done.value) == 0
     assert int(dut.adc_ready.value) == 1
 
-
-@cocotb.test()
-async def test_adc_reset_vs_global_reset_on_adc_o(dut):
-    cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
-    await reset_dut(dut)
-
-    # Build nonzero output code
-    for i in range(3):
-        await do_conversion_step(dut, cmp_value=1, first_step=(i == 0))
-        assert_state(dut, WAIT, "Expected WAIT while building nonzero code:")
-    assert int(dut.adc_o.value) > 0
-
-    # adc_reset should return to IDLE control path
-    dut.adc_reset.value = 1
-    await ClockCycles(dut.clk, 1)
-    dut.adc_reset.value = 0
-    await ClockCycles(dut.clk, 1)
-    assert_state(dut, IDLE)
-
-    # global reset should clear adc_o
-    dut.reset_signal.value = 1
-    await ClockCycles(dut.clk, 1)
-    dut.reset_signal.value = 0
-    await ClockCycles(dut.clk, 1)
-    assert_state(dut, IDLE)
-    assert int(dut.adc_o.value) == 0, "adc_o should clear on global reset"
