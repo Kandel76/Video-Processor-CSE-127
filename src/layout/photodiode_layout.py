@@ -21,9 +21,11 @@ def nwell_psub_photodiode(width: int = 5, nplus_contact_distacne_from_top_of_nwe
 
     photo_diode_rect << photo_diode_nwell
 
-    rinner = 100
+    # lets make sure nwell angles are 90 degrees
+
+    #rinner = 100
     router = 100
-    n = 300  # points in circle
+    #n = 300  # points in circle
     # Round corners for all layers.
     photo_diode_rounded = gf.Component()
     for layer, polygons in photo_diode_rect.get_polygons().items():
@@ -204,25 +206,40 @@ def body_contact(source_follower_spec: ComponentSpec = source_follower_nfet):
     contact = gf.Component()
     source_follower = gf.get_component(source_follower_spec)
 
+    #changed size from (1.5, 0.4) to (1.82, 0.72)
     pplus = gf.components.rectangle(
-        size=(1.5, 0.4), layer=gf180mcu.LAYER.pplus)
+        size=(1.82, 0.72), layer=gf180mcu.LAYER.pplus)
     pplus_ref = contact << pplus
+
+    #adding comp for body_contact
+    comp = gf.components.rectangle(
+            size=(1.5, 0.4), layer=gf180mcu.LAYER.comp)
+    comp_ref = contact << comp
+    
+    comp_ref.center = source_follower.center
+    #end my code
+    
     pplus_ref.center = source_follower.center
     pplus_ref.ymax = source_follower.ymin
     pplus_ref.xmin = source_follower.xmin
 
+    #changed metal_level from 2 to 1
     contact << gf180mcu.cells.via_stack(
-        x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(pplus_ref.ymin, pplus_ref.ymax), via_size=(0.26, 0.26), via_spacing=(0.36, 0.36), m_enc=0.08, metal_level=2)
+        x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(pplus_ref.ymin, pplus_ref.ymax), via_size=(0.26, 0.26), via_spacing=(0.36, 0.36), m_enc=0.08, metal_level=1)
 
     contact.y -= 0.12
 
-    contact << gf180mcu.cells.via_generator(x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(
-        pplus_ref.ymin, pplus_ref.ymax), via_layer=gf180mcu.LAYER.via2, via_spacing=(0.36, 0.36), via_size=(0.26, 0.26))
+    #removed this section as body_contatct should not have via2? 
+    #should only have COMP / PPLUS / CONTACTS / METAL1
+
+    #contact << gf180mcu.cells.via_generator(x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(
+    #    pplus_ref.ymin, pplus_ref.ymax), via_layer=gf180mcu.LAYER.via2, via_spacing=(0.36, 0.36), via_size=(0.26, 0.26))
 
     return contact
 
 
 @gf.cell
+
 def active_pixel_3t(
         dark = False,
         photodiode_spec: ComponentSpec = nwell_psub_photodiode,
@@ -233,10 +250,10 @@ def active_pixel_3t(
 
     active_pixel = gf.Component()
     photodiode = gf.get_component(photodiode_spec).copy()
-    reset_transistor = gf.get_component(reset_transistor_spec).copy()
-    source_follower_nfet = gf.get_component(source_follower_spec).copy()
-    row_select = gf.get_component(row_select_spec).copy()
-    body_contact = gf.get_component(body_contact).copy()
+    reset_transistor = gf.get_component(reset_transistor_spec)
+    source_follower_nfet = gf.get_component(source_follower_spec)
+    row_select = gf.get_component(row_select_spec)
+    body_contact = gf.get_component(body_contact)
 
     photodiode_ref = active_pixel << photodiode
     active_pixel << reset_transistor
@@ -425,29 +442,27 @@ def active_pixel_3t(
     nwell_extra_ref.ymin = row_enable.ymax
     nwell_extra_ref.xmin = photodiode_ref.xmin
 
-
-    rinner = 100
-    router = 100
-    n = 300  # points in circle
-
-    rounded_nwell = gf.Component()
+    merged_nwell = gf.Component()
     for layer, polygons in active_pixel.get_polygons(merge=True, layers=[gf180mcu.LAYER.nwell]).items():
         for polygon in polygons:
-            rounded_poly = polygon.round_corners(rinner, router, n)
-            rounded_nwell.add_polygon(rounded_poly, layer=layer)
+            merged_nwell.add_polygon(polygon, layer=layer)
 
     active_pixel = active_pixel.remove_layers(
         layers=[gf180mcu.LAYER.nwell], unlock=True)
-    active_pixel.add_ref(rounded_nwell)
+    active_pixel.add_ref(merged_nwell)
 
     # adding SAB and COMP layers over photodiode
-    polys = rounded_nwell.get_polygons()
+    polys = merged_nwell.get_polygons()
 
-    for poly_list in polys.values():
+    '''for poly_list in polys.values():
         for poly in poly_list:
             active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.comp)
-            if (dark == False):
-                active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
+            active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
+            
+    if (dark == True):
+        active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.sab], unlock=True)
+        '''
+
     # seems there is already COMP layers by default over transistors
 
     return active_pixel
@@ -463,10 +478,14 @@ com = active_pixel_3t()
 dark_row = active_pixel_3t(dark = True)
 
 c = gf.Component()
-active_pixels = c.add_ref(com, rows=240, columns=320, row_pitch=com.xsize, column_pitch=com.ysize)
-dark_pixels = c.add_ref(dark_row, rows=240, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
+#active_pixels = c.add_ref(com, rows=240, columns=320, row_pitch=com.xsize, column_pitch=com.ysize)
+#dark_pixels = c.add_ref(dark_row, rows=240, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
+active_pixels = c.add_ref(com, rows=1, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
+#dark_pixels = c.add_ref(dark_row, rows=1, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
 
-dark_pixels.xmin = active_pixels.xmax
-dark_pixels.ymin = active_pixels.ymin
+'''
+active_pixels.xmin = dark_pixels.xmax
+active_pixels.ymin = dark_pixels.ymin
+'''
 
 c.show()
