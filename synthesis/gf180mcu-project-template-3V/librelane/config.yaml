@@ -193,18 +193,18 @@ MACROS:
         - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ff_n40C_3v60.lib
     instances:
       # Make sure to specify the SRAMs in pdn_cfg.tcl
-      i_chip_core.sram_0:
+      i_chip_core.mymem2vga.the_double_buffer.buf1:
         location: [490, 500]
         orientation: N
-      i_chip_core.sram_1:
+      i_chip_core.mymem2vga.the_double_buffer.buf2:
         location: [970, 500]
         orientation: E
 
 # This is an alternative method compared to
 # specifying the power connections in the RTL
 PDN_MACRO_CONNECTIONS:
-- "i_chip_core.sram_0 VDD VSS VDD VSS"
-- "i_chip_core.sram_1 VDD VSS VDD VSS"
+- "i_chip_core.mymem2vga.the_double_buffer.buf1 VDD VSS VDD VSS"
+- "i_chip_core.mymem2vga.the_double_buffer.buf2 VDD VSS VDD VSS"
 
 # Halo size around macros while cutting rows.
 # Workaround for: https://github.com/The-OpenROAD-Project/OpenROAD/issues/8868
