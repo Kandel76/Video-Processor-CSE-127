@@ -197,7 +197,7 @@ add_pdn_connect \
 
 define_pdn_grid \
     -macro \
-    -instances i_chip_core.sram_0 \
+    -instances i_chip_core.mymem2vga.the_double_buffer.buf1 \
     -name sram_macros_NS \
     -starts_with POWER \
     -halo "$::env(PDN_HORIZONTAL_HALO) $::env(PDN_VERTICAL_HALO)"
@@ -235,7 +235,7 @@ add_pdn_stripe \
 
 define_pdn_grid \
     -macro \
-    -instances i_chip_core.sram_1 \
+    -instances i_chip_core.mymem2vga.the_double_buffer.buf2 \
     -name sram_macros_WE \
     -starts_with POWER \
     -halo "$::env(PDN_HORIZONTAL_HALO) $::env(PDN_VERTICAL_HALO)"

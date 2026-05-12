@@ -13,6 +13,12 @@ VERILOG_SOURCES = \
 TOPLEVEL = top
 COCOTB_TEST_MODULES = test_top
 
+ROWS ?= 240
+COLS ?= 320
+
+COMPILE_ARGS += -P top.ROWS=$(ROWS) -P top.COLS=$(COLS) \
+                -P top.RAMP_TIME=4 -P top.RESET_CYCLES=2 -P top.INTEGRATION_CYCLES=2
+
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 .PHONY: sim_sar_adc
