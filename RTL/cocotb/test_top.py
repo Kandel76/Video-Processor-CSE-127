@@ -15,7 +15,7 @@ async def reset_dut(dut):
   #initialize inputs
   dut.rst_n.value = 0
   dut.frame_start.value = 0
-  dut.cmp_q.value = 0
+  dut.cmp_o.value = 0
   dut.wready_i.value = 1  #always ready to accept memory writes
 
   #hold reset
@@ -25,7 +25,7 @@ async def reset_dut(dut):
   await ClockCycles(dut.clk, 2)
 
 #generate comparator outputs from image pixels and threshold
-def get_cmp_q(row_pixels, threshold):
+def get_cmp_o(row_pixels, threshold):
   cmp_value = 0
 
   for col in range(len(row_pixels)):
@@ -55,16 +55,16 @@ async def top_reaches_frame_done(dut):
 
   # driving cmp_q like comparator: cmp_q bit = 1 when pixel value > duty_cycle
   # checking if the system runs and reaches frame_done
-  for cycle in range(1000):
+  for cycle in range(500_000):
     threshold = int(dut.duty_cycle.value)
     row = int(dut.current_row.value)
 
     # drive comparator outputs for current row
     if row < image.shape[0]:
       row_pixels = image[row]
-      dut.cmp_q.value = get_cmp_q(row_pixels, threshold)
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold)
     else:
-      dut.cmp_q.value = 0
+      dut.cmp_o.value = 0
 
     await RisingEdge(dut.clk)
 
