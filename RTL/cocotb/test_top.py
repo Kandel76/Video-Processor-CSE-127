@@ -25,22 +25,23 @@ async def reset_dut(dut):
   await ClockCycles(dut.clk, 2)
 
 #generate comparator outputs from image pixels and threshold
-def get_cmp_o(row_pixels, threshold):
-  cmp_value = 0
+#returns a binary string
+def get_cmp_o(row_pixels, threshold, cmp_width):
+  bits = ["0"] * cmp_width
 
   for col in range(len(row_pixels)):
     pixel = int(row_pixels[col])
 
     #comparator output is 1 if pixel > threshold
     if pixel > threshold:
-      cmp_value |= 1 << (col+1)
-
-  return cmp_value
+      bits[col + 1] = "1"
+  #reversed bc cocotb expects MSB on the left side
+  return "".join(reversed(bits))
 
 
 @cocotb.test()
 async def top_reaches_frame_done(dut):
-  cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, units="ns").start())
+  cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
 
   await reset_dut(dut)
 
@@ -62,7 +63,8 @@ async def top_reaches_frame_done(dut):
     # drive comparator outputs for current row
     if row < image.shape[0]:
       row_pixels = image[row]
-      dut.cmp_o.value = get_cmp_o(row_pixels, threshold)
+      cmp_width = len(dut.cmp_o.value) # get width of cmp_o from DUT
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, cmp_width)
     else:
       dut.cmp_o.value = 0
 
