@@ -14,3 +14,11 @@ TOPLEVEL = top
 COCOTB_TEST_MODULES = test_top
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
+
+.PHONY: sim_sar_adc
+sim_sar_adc:
+	$(MAKE) clean
+	$(MAKE) sim \
+	TOPLEVEL=sar_adc \
+	COCOTB_TEST_MODULES=test_sar_adc \
+	VERILOG_SOURCES=../sar_adc.sv

@@ -201,7 +201,7 @@ async def test_sar_adc_fsm_transitions(dut):
     await RisingEdge(dut.clk)
     assert_state(dut, UPDATE, "SAMPLE->UPDATE failed:")
 
-    # UPDATE -> WAIT for non-terminal code
+    # UPDATE -> WAIT
     await RisingEdge(dut.clk)
     assert_state(dut, WAIT, "UPDATE->WAIT failed:")
 
