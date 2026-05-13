@@ -4,7 +4,7 @@ SIM = icarus
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
-.PHONY: sim_top sim_sar_adc
+.PHONY: sim_top sim_sar_adc sim_ramp_control
 
 sim_top:
 	$(MAKE) clean
@@ -19,3 +19,10 @@ sim_sar_adc:
 		TOPLEVEL=sar_adc \
 		COCOTB_TEST_MODULES=test_sar_adc \
 		VERILOG_SOURCES="../sar_adc.sv"
+
+sim_ramp_control:
+	$(MAKE) clean
+	$(MAKE) sim \
+		TOPLEVEL=ramp_controller \
+		COCOTB_TEST_MODULES=test_ramp_control \
+		VERILOG_SOURCES="../ramp_controller.sv"
