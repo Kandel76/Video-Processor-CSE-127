@@ -1,4 +1,4 @@
-module ramp_controller #(parameter int ramp_time = 775)(
+module ramp_controller #(parameter int ramp_time = 213)(
     //global clock
     input [0:0] clk,
     //global reset
