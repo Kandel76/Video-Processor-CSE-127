@@ -7,9 +7,7 @@ PIXEL_PITCH_Y = 8.58
 NUM_ROWS = 240
 NUM_COLS = 321
 
-# ---------------------------------
 # Row signal geometry
-# ---------------------------------
 ROW_SELECT_Y1 = 0.305
 ROW_SELECT_Y2 = 0.555
 
@@ -19,9 +17,7 @@ RESET_Y2 = 7.675
 VDD_Y1 = 8.025
 VDD_Y2 = 8.275
 
-# ---------------------------------
 # Column signal geometry
-# ---------------------------------
 COLUMN_X1 = 7.845
 COLUMN_X2 = 8.125
 
@@ -57,7 +53,7 @@ def write_row_select_pins(f):
         f.write("    END\n")
         f.write(f"  END ROW_SELECT[{row}]\n\n")
 
-  def write_reset_pins(f):
+def write_reset_pins(f):
     for row in range(NUM_ROWS):
         base_y = row * PIXEL_PITCH_Y
 
@@ -94,7 +90,7 @@ def write_vdd_pins(f):
         f.write("    END\n")
         f.write(f"  END VDD[{row}]\n\n")
 
-  def write_column_output_pins(f):
+def write_column_output_pins(f):
     for col in range(NUM_COLS):
         base_x = col * PIXEL_PITCH_X
 
