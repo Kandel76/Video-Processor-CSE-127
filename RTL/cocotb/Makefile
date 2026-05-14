@@ -1,6 +1,8 @@
 ROWS ?= 240
 COLS ?= 320
 SIM = icarus
+COCOTB_HDL_TIMEUNIT = 1ns
+COCOTB_HDL_TIMEPRECISION = 1ps
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
@@ -12,6 +14,7 @@ sim_top:
 		TOPLEVEL=top \
 		COCOTB_TEST_MODULES=test_top \
 		VERILOG_SOURCES="../top.sv ../sar_adc.sv ../ramp_controller.sv ../Scanner/scanner.sv ../Scanner2Mem/scanner_to_mem.sv" \
+		COMPILE_ARGS="-Ptop.ROWS=$(ROWS) -Ptop.COLS=$(COLS)"
 
 sim_sar_adc:
 	$(MAKE) clean
