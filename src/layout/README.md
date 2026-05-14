@@ -23,4 +23,17 @@ COMP RULES
 
 Currently slowing working through each violation and altering the .py file to fix them.
 
+Fixes:
+# Rule nwell\_angle
+Just removed the rounding of corners.
 
+# Rule C0.6
+Code was generating contacts on both sides of gate, despite only using and needing one contact.
+Fixed by just generating one contact per transistor.
+
+# Rule CO.11
+Since COMP has not been added, a contact is just floating in nwell.
+There are also contacts over via1/via2 but not over COMP.
+
+# Rule SB.4
+Made a small cutout on the SAB where the contact is located on photodiode.

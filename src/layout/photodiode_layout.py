@@ -206,17 +206,16 @@ def body_contact(source_follower_spec: ComponentSpec = source_follower_nfet):
     contact = gf.Component()
     source_follower = gf.get_component(source_follower_spec)
 
-    #changed size from (1.5, 0.4) to (1.82, 0.72)
     pplus = gf.components.rectangle(
-        size=(1.82, 0.72), layer=gf180mcu.LAYER.pplus)
+        size=(1.5, 0.4), layer=gf180mcu.LAYER.pplus)
     pplus_ref = contact << pplus
 
     #adding comp for body_contact
-    comp = gf.components.rectangle(
-            size=(1.5, 0.4), layer=gf180mcu.LAYER.comp)
-    comp_ref = contact << comp
+   # comp = gf.components.rectangle(
+   #         size=(1.5, 0.4), layer=gf180mcu.LAYER.comp)
+   # comp_ref = contact << comp
     
-    comp_ref.center = source_follower.center
+   # comp_ref.center = source_follower.center
     #end my code
     
     pplus_ref.center = source_follower.center
@@ -225,15 +224,15 @@ def body_contact(source_follower_spec: ComponentSpec = source_follower_nfet):
 
     #changed metal_level from 2 to 1
     contact << gf180mcu.cells.via_stack(
-        x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(pplus_ref.ymin, pplus_ref.ymax), via_size=(0.26, 0.26), via_spacing=(0.36, 0.36), m_enc=0.08, metal_level=1)
+        x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(pplus_ref.ymin, pplus_ref.ymax), via_size=(0.26, 0.26), via_spacing=(0.36, 0.36), m_enc=0.08, metal_level=2)
 
     contact.y -= 0.12
 
     #removed this section as body_contatct should not have via2? 
     #should only have COMP / PPLUS / CONTACTS / METAL1
 
-    #contact << gf180mcu.cells.via_generator(x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(
-    #    pplus_ref.ymin, pplus_ref.ymax), via_layer=gf180mcu.LAYER.via2, via_spacing=(0.36, 0.36), via_size=(0.26, 0.26))
+    contact << gf180mcu.cells.via_generator(x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(
+        pplus_ref.ymin, pplus_ref.ymax), via_layer=gf180mcu.LAYER.via2, via_spacing=(0.36, 0.36), via_size=(0.26, 0.26))
 
     return contact
 
@@ -438,7 +437,7 @@ def active_pixel_3t(
     )
 
     # Create extra nwell to fill out the space
-    nwell_extra_ref = active_pixel << gf.components.rectangle(size=(body_contact.xmax - photodiode_ref.xmin - 0.07, (body_contact.ymin - 0.4) - row_enable.ymax), layer=gf180mcu.LAYER.nwell)
+    nwell_extra_ref = active_pixel << gf.components.rectangle(size=(body_contact.xmax - photodiode_ref.xmin - 0.2, (body_contact.ymin - 0.4) - row_enable.ymax), layer=gf180mcu.LAYER.nwell)
     nwell_extra_ref.ymin = row_enable.ymax
     nwell_extra_ref.xmin = photodiode_ref.xmin
 
@@ -452,16 +451,31 @@ def active_pixel_3t(
     active_pixel.add_ref(merged_nwell)
 
     # adding SAB and COMP layers over photodiode
+
     polys = merged_nwell.get_polygons()
 
-    '''for poly_list in polys.values():
+    sab_source = gf.Component()
+    for poly_list in polys.values():
         for poly in poly_list:
-            active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.comp)
-            active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
+            sab_source.add_polygon(poly, layer=gf180mcu.LAYER.sab)
+
+    cutout = gf.Component()
+    cutout_rect = cutout << gf.components.rectangle(size=(0.864, 0.674), layer=gf180mcu.LAYER.sab)
+    cutout_rect.xmax = merged_nwell.xmax - 1.7
+    cutout_rect.ymax = merged_nwell.ymax
+
+    sab_final = gf.boolean(A=sab_source, B=cutout, operation="A-B", layer=gf180mcu.LAYER.sab)
+
+    active_pixel << sab_final
+
+
+    #for poly_list in polys.values():
+        #for poly in poly_list:
+   #         active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.comp)
+        #    active_pixel.add_polygon(poly, layer=gf180mcu.LAYER.sab)
             
-    if (dark == True):
-        active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.sab], unlock=True)
-        '''
+   # if (dark == True):
+   #     active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.sab], unlock=True)
 
     # seems there is already COMP layers by default over transistors
 
