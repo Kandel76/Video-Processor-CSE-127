@@ -4,9 +4,9 @@ module top #(
     parameter int ROWS               = 240,
     parameter int COLS               = 320,
     parameter int DATA_BITS          = 4,
-    parameter int RESET_CYCLES       = 2, //keep these low for faster sim
-    parameter int INTEGRATION_CYCLES = 2,
-    parameter int RAMP_TIME          = 4
+    parameter int RESET_CYCLES       = 10, //keep these low for faster sim
+    parameter int INTEGRATION_CYCLES = 10,
+    parameter int RAMP_TIME          = 213
 )(
     input  logic                              clk,
     input  logic                              rst_n,

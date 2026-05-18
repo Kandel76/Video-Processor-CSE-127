@@ -1,5 +1,3 @@
-from email.mime import image
-
 import cocotb
 import numpy as np
 
@@ -8,8 +6,8 @@ from cocotb.triggers import RisingEdge, ClockCycles
 
 
 CLK_PERIOD_NS = 40
-ROWS         = 4
-COLS         = 4
+ROWS         = 240
+COLS         = 320
 BYTES_PER_ROW = COLS // 2   # 160 bytes per row (two 4-bit pixels packed per byte)
 
 
@@ -107,7 +105,7 @@ async def frame_done_test(dut):
   # driving cmp_q like comparator: cmp_q bit = 1 when pixel value > duty_cycle
   
   # checking if the system runs and reaches frame_done
-  for cycle in range(500_000):
+  for cycle in range(2_000_000):
     threshold = int(dut.duty_cycle.value)
     row = int(dut.current_row.value)
 
@@ -126,8 +124,9 @@ async def frame_done_test(dut):
         dut._log.info(f"frame_done reached at cycle {cycle}; Memory contents match expected values")
         return
 
-  # if we never reached frame_done, test fails
   assert dut.frame_done.value == 1, "did not reach frame_done"
+  assert np.array_equal(actual_mem, expected_mem), \
+    f"Memory mismatch\nexpected: {expected_mem}\nactual:   {actual_mem}"
 
 
 
@@ -159,7 +158,7 @@ async def back_pressure_test(dut):
   await ClockCycles(dut.clk, 1)
   dut.frame_start.value = 0
 
-  for cycle in range(500_000):
+  for cycle in range(2_000_000):
     threshold = int(dut.duty_cycle.value)
     row = int(dut.current_row.value)
 
@@ -178,6 +177,191 @@ async def back_pressure_test(dut):
       return
 
   assert int(dut.frame_done.value) == 1, "did not reach frame_done after releasing backpressure"
+  assert np.array_equal(actual_mem, expected_mem), \
+    f"Memory mismatch\nexpected: {expected_mem}\nactual:   {actual_mem}"
+
+
+@cocotb.test()
+async def multiple_frame_test(dut):
+  cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, units="ns").start())
+  await reset_dut(dut)
+
+  # first frame
+  image = load_img("img2_gradient.npy")
+  expected_mem = build_expected_memory(image)
+  actual_mem = np.zeros_like(expected_mem, dtype=np.uint8)
+  cocotb.start_soon(capture_dut_writes(dut, actual_mem))
+
+  dut.frame_start.value = 1
+  await ClockCycles(dut.clk, 1)
+  dut.frame_start.value = 0
+
+  for cycle in range(2_000_000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    cols = len(dut.cmp_o) - 1
+    if row < image.shape[0]:
+      row_pixels = image[row, :cols]
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+
+    if int(dut.frame_done.value) == 1 and np.array_equal(actual_mem, expected_mem):
+      dut._log.info(f"Frame 1: frame_done at cycle {cycle}; Memory contents match")
+      break
+  else:
+    assert False, "Frame 1: did not reach frame_done"
+
+  # second frame
+  image2 = load_img("img2_gradient.npy")
+  expected_mem2 = build_expected_memory(image2)
+  actual_mem2 = np.zeros_like(expected_mem2, dtype=np.uint8)
+  cocotb.start_soon(capture_dut_writes(dut, actual_mem2))
+
+  dut.frame_start.value = 1
+  await ClockCycles(dut.clk, 1)
+  dut.frame_start.value = 0
+
+  for cycle in range(2_000_000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    cols = len(dut.cmp_o) - 1
+    if row < image2.shape[0]:
+      row_pixels = image2[row, :cols]
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+
+    if int(dut.frame_done.value) == 1 and np.array_equal(actual_mem2, expected_mem2):
+      dut._log.info(f"Frame 2: frame_done at cycle {cycle}; Memory contents match")
+      return
+
+  assert int(dut.frame_done.value) == 1, "Frame 2: did not reach frame_done"
+  assert np.array_equal(actual_mem2, expected_mem2), \
+    f"Frame 2: Memory mismatch\nexpected: {expected_mem2}\nactual:   {actual_mem2}"
+  
+
+#frame start before frame done test (expected: should ignore frame start in an active frame and not crash)
+#intent: frame start will be always active in top mod, makes sure this doesnt interfere with processing and cause any issues
+@cocotb.test()
+async def frame_start_during_active_frame_test(dut):
+  
+  Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start()
+
+  await reset_dut(dut)
+
+  #load gradient test image first
+  #will add the rest of the test images after testing
+
+  image = load_img("img2_gradient.npy")
+  expected_mem = build_expected_memory(image)
+  actual_mem = np.zeros_like(expected_mem, dtype=np.uint8) #create array size of expected with all zeros
+  cocotb.start_soon(capture_dut_writes(dut, actual_mem))
+
+  #pulse frame start to begin processing
+  dut.frame_start.value = 1
+  await ClockCycles(dut.clk, 1)
+  dut.frame_start.value = 0
+
+  # driving cmp_q like comparator: cmp_q bit = 1 when pixel value > duty_cycle
+  
+  # checking if the system runs and reaches frame_done
+  for cycle in range(2_000_000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    #pulse frame start every 200 cycles to test if it causes any issues)
+    if cycle % 200 == 0:
+      dut.frame_start.value = 1
+    else:
+      dut.frame_start.value = 0
+
+    # drive comparator outputs for current row
+    cols = len(dut.cmp_o) - 1
+    if row < image.shape[0]:
+      row_pixels = image[row, :cols]
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+
+    #check if frame completes
+    if ((dut.frame_done.value) == 1) & (np.array_equal(actual_mem, expected_mem) ):
+        dut._log.info(f"frame_done reached at cycle {cycle}; Memory contents match expected values")
+        return
+
+  assert dut.frame_done.value == 1, "did not reach frame_done"
+  assert np.array_equal(actual_mem, expected_mem), \
+    f"Memory mismatch\nexpected: {expected_mem}\nactual:   {actual_mem}"
+
+
+@cocotb.test()
+async def no_frame_start_test(dut):
+  Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start()
+  await reset_dut(dut)
+
+  #drive comparator outputs for a few cycles without ever pulsing frame start
+  for cycle in range(1000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    cols = len(dut.cmp_o) - 1
+    if row < ROWS:
+      row_pixels = np.zeros(cols, dtype=np.uint8)  # all pixels below threshold
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+
+  assert int(dut.frame_done.value) == 0, "frame_done should not be high without frame_start"
+
+
+@cocotb.test()
+async def mid_frame_reset_test(dut):
+  Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start()
+  await reset_dut(dut)
+
+  image = load_img("img2_gradient.npy")
+  expected_mem = build_expected_memory(image)
+  actual_mem = np.zeros_like(expected_mem, dtype=np.uint8)
+  cocotb.start_soon(capture_dut_writes(dut, actual_mem))
+
+  dut.frame_start.value = 1
+  await ClockCycles(dut.clk, 1)
+  dut.frame_start.value = 0
+
+  for cycle in range(2_000_000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    #assert reset in the middle of the frame
+    if cycle == 500:
+      dut.rst_n.value = 0
+      await ClockCycles(dut.clk, 5)
+      dut.rst_n.value = 1
+
+    cols = len(dut.cmp_o) - 1
+    if row < image.shape[0]:
+      row_pixels = image[row, :cols]
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+
+    #after reset, should not reach frame_done or match expected memory since processing should be interrupted
+    if int(dut.frame_done.value) == 1:
+      assert not np.array_equal(actual_mem, expected_mem), "Memory should not match expected after mid-frame reset"
+      dut._log.info(f"frame_done reached at cycle {cycle} after mid-frame reset (expected); Memory contents do NOT match expected values [Expected Behavior]")
+      return
 
 
 
