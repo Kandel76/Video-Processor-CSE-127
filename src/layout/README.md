@@ -37,3 +37,6 @@ There are also contacts over via1/via2 but not over COMP.
 
 # Rule SB.4
 Made a small cutout on the SAB where the contact is located on photodiode.
+
+# Rule DF.12
+Photodiode is a special struture, thus we just mark the bare COMP as intentional.
