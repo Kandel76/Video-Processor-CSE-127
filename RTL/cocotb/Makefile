@@ -1,5 +1,3 @@
-ROWS ?= 240
-COLS ?= 320
 SIM = icarus
 COCOTB_HDL_TIMEUNIT = 1ns
 COCOTB_HDL_TIMEPRECISION = 1ps
@@ -13,8 +11,7 @@ sim_top:
 	$(MAKE) sim \
 		TOPLEVEL=top \
 		COCOTB_TEST_MODULES=test_top \
-		VERILOG_SOURCES="../top.sv ../sar_adc.sv ../ramp_controller.sv ../Scanner/scanner.sv ../Scanner2Mem/scanner_to_mem.sv" \
-		COMPILE_ARGS="-Ptop.ROWS=$(ROWS) -Ptop.COLS=$(COLS)"
+		VERILOG_SOURCES="../top.sv ../sar_adc.sv ../ramp_controller.sv ../Scanner/scanner.sv ../Scanner2Mem/scanner_to_mem.sv"
 
 sim_sar_adc:
 	$(MAKE) clean

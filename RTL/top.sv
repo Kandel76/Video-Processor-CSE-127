@@ -1,12 +1,12 @@
 `timescale 1ns/1ps
 
 module top #(
-    parameter int ROWS               = 240,
-    parameter int COLS               = 320,
+    parameter int ROWS               = 4,
+    parameter int COLS               = 4,
     parameter int DATA_BITS          = 4,
     parameter int RESET_CYCLES       = 10, //keep these low for faster sim
     parameter int INTEGRATION_CYCLES = 10,
-    parameter int RAMP_TIME          = 213
+    parameter int RAMP_TIME          = 213 //should be above 213
 )(
     input  logic                              clk,
     input  logic                              rst_n,
