@@ -1,4 +1,4 @@
-import cocotb
+import cocotb 
 import numpy as np
 import os
 
@@ -12,8 +12,8 @@ COLS         = 4
 BYTES_PER_ROW = COLS // 2
 
 image1 = "img3_center_square.npy"
-image2 = "img_all_fifteens.npy"
-
+image2 = "img_all_ones.npy"
+image3 = "img_all_zeros.npy"
 
 #load test image from test_images folder
 def load_img(filename):
@@ -266,7 +266,79 @@ async def multiple_frame_test(dut):
   assert int(dut.frame_done.value) == 1, "Frame 2: did not reach frame_done"
   assert np.array_equal(actual_mem2, expected_mem2), \
     f"Frame 2: Memory mismatch\nexpected: {expected_mem2}\nactual:   {actual_mem2}"
-  
+
+
+#verify frame-to-frame stale data/ghosting behavior
+#expected: frame 2 memory shouldn't contain values from frame 1
+@cocotb.test()
+async def ghosting_frame_to_frame_test(dut):
+  cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
+  await reset_dut(dut)
+
+  frame1 = load_img(image2) #bright image
+  frame2 = load_img(image3) #dark image
+
+  expected1 = build_expected_memory(frame1)
+  expected2 = build_expected_memory(frame2)
+
+  actual_mem1 = np.zeros_like(expected1, dtype=np.uint8)
+  cocotb.start_soon(capture_dut_writes(dut, actual_mem1))
+
+  #start frame 1
+  dut.frame_start.value = 1
+  await ClockCycles(dut.clk, 1)
+  dut.frame_start.value = 0
+
+  for cycle in range(2_000_000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    cols = len(dut.cmp_o) - 1
+    if row < frame1.shape[0]:
+      row_pixels = frame1[row, :cols]
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+    if int(dut.frame_done.value) == 1 and np.array_equal(actual_mem1, expected1):
+      dut._log.info(f"Ghosting test frame 1 passed at cycle {cycle}")
+      break
+  else:
+    assert False, "Ghosting test frame 1 did not complete"
+
+  await ClockCycles(dut.clk, 5)
+
+  actual_mem2 = np.zeros_like(expected2, dtype=np.uint8)
+  cocotb.start_soon(capture_dut_writes(dut, actual_mem2))
+
+  #start frame 2
+  dut.frame_start.value = 1
+  await ClockCycles(dut.clk, 1)
+  dut.frame_start.value = 0
+
+  for cycle in range(2_000_000):
+    threshold = int(dut.duty_cycle.value)
+    row = int(dut.current_row.value)
+
+    cols = len(dut.cmp_o) - 1
+    if row < frame2.shape[0]:
+      row_pixels = frame2[row, :cols]
+      dut.cmp_o.value = get_cmp_o(row_pixels, threshold, len(dut.cmp_o))
+    else:
+      dut.cmp_o.value = 0
+
+    await RisingEdge(dut.clk)
+
+    if int(dut.frame_done.value) == 1:
+      break
+  else:
+    assert False, "Ghosting test frame 2 did not complete"
+
+  assert np.array_equal(actual_mem2, expected2), \
+    f"Possible ghosting detected\nexpected: {expected2}\ngot: {actual_mem2}"
+  dut._log.info("Ghosting test passed: dark frame didnt keep bright frame values")
+
 
 #frame start before frame done test (expected: should ignore frame start in an active frame and not crash)
 #intent: frame start will be always active in top mod, makes sure this doesnt interfere with processing and cause any issues
