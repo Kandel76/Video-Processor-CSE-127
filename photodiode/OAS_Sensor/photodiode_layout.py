@@ -22,7 +22,6 @@ def nwell_psub_photodiode(width: int = 5, nplus_contact_distacne_from_top_of_nwe
     photo_diode_rect << photo_diode_nwell
 
     # lets make sure nwell angles are 90 degrees
-
     #rinner = 100
     router = 100
     #n = 300  # points in circle
@@ -60,10 +59,12 @@ def reset_transistor(photodiode_spec: ComponentSpec = nwell_psub_photodiode, res
     # Create reset transistor
     nfet_component = gf180mcu.cells.nfet(
         w_gate=0.37, l_gate=0.36, label=True, sd_label=['S', 'D'], g_label=["gate"], gate_con_pos="bottom").copy()
+
     gf.add_ports.add_ports_from_labels(component=nfet_component, port_width=0.34,
                                        port_layer=gf180mcu.LAYER.metal1, layer_label=gf180mcu.LAYER.metal1_label, port_type="electrical")
 
     nfet_ref = reset_transistor.add_ref(nfet_component)
+
     reset_transistor.add_ports(nfet_ref.ports)
 
     # Add patch metal to meet overlap rules on M1 to contact
@@ -133,6 +134,7 @@ def row_select(source_follower_spec: ComponentSpec = source_follower_nfet):
     # Create reset transistor
     nfet_component = gf180mcu.cells.nfet(
         w_gate=0.37, l_gate=0.36, label=True, sd_label=['S', 'D'], g_label=["gate"], enable_left_diffusion_contacts=False).copy()
+
     gf.add_ports.add_ports_from_labels(component=nfet_component, port_width=0.34,
                                        port_layer=gf180mcu.LAYER.metal1, layer_label=gf180mcu.LAYER.metal1_label, port_type="electrical")
 
@@ -206,33 +208,31 @@ def body_contact(source_follower_spec: ComponentSpec = source_follower_nfet):
     contact = gf.Component()
     source_follower = gf.get_component(source_follower_spec)
 
-    pplus = gf.components.rectangle(
-        size=(1.5, 0.4), layer=gf180mcu.LAYER.pplus)
+    # increased pplus size from (1.5. 0.4) to satisfy COMP overlap rules
+    pplus = gf.components.rectangle(size=(1.69, 0.69), layer=gf180mcu.LAYER.pplus)
     pplus_ref = contact << pplus
-
-    #adding comp for body_contact
-   # comp = gf.components.rectangle(
-   #         size=(1.5, 0.4), layer=gf180mcu.LAYER.comp)
-   # comp_ref = contact << comp
-    
-   # comp_ref.center = source_follower.center
-    #end my code
-    
     pplus_ref.center = source_follower.center
-    pplus_ref.ymax = source_follower.ymin
-    pplus_ref.xmin = source_follower.xmin
+    pplus_ref.ymax = source_follower.ymin 
+    # shifted to keep pplus centered
+    pplus_ref.xmin = source_follower.xmin - 0.095
 
-    #changed metal_level from 2 to 1
+    # adding comp for body_contact
+    comp = gf.components.rectangle(size=(1.37, 0.37), layer=gf180mcu.LAYER.comp)
+    comp_ref = contact << comp
+    
+    comp_ref.center = source_follower.center
+    comp_ref.ymax = source_follower.ymin - 0.16
+    comp_ref.xmin = source_follower.xmin + 0.065
+    # end my code
+
+    # recentered stack on pplus
     contact << gf180mcu.cells.via_stack(
-        x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(pplus_ref.ymin, pplus_ref.ymax), via_size=(0.26, 0.26), via_spacing=(0.36, 0.36), m_enc=0.08, metal_level=2)
+        x_range=(pplus_ref.xmin + 0.095, pplus_ref.xmax - 0.095), y_range=(pplus_ref.ymin + 0.145, pplus_ref.ymax - 0.145), via_size=(0.26, 0.26), via_spacing=(0.36, 0.36), m_enc=0.08, metal_level=2)
 
     contact.y -= 0.12
 
-    #removed this section as body_contatct should not have via2? 
-    #should only have COMP / PPLUS / CONTACTS / METAL1
-
-    contact << gf180mcu.cells.via_generator(x_range=(pplus_ref.xmin, pplus_ref.xmax), y_range=(
-        pplus_ref.ymin, pplus_ref.ymax), via_layer=gf180mcu.LAYER.via2, via_spacing=(0.36, 0.36), via_size=(0.26, 0.26))
+    contact << gf180mcu.cells.via_generator(x_range=(pplus_ref.xmin + 0.095, pplus_ref.xmax - 0.095), y_range=(
+        pplus_ref.ymin + 0.145, pplus_ref.ymax - 0.145), via_layer=gf180mcu.LAYER.via2, via_spacing=(0.36, 0.36), via_size=(0.26, 0.26))
 
     return contact
 
@@ -450,20 +450,36 @@ def active_pixel_3t(
         layers=[gf180mcu.LAYER.nwell], unlock=True)
     active_pixel.add_ref(merged_nwell)
 
-    # adding missing COMP over two contacts
-    # work in progress
+    # Remove unneeded contacts
+    erase = gf.Component()
 
+    erase1_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
+    erase1_rect.xmax = 6.895; erase1_rect.ymax = 4.115
+    erase2_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
+    erase2_rect.xmax = 7.405; erase2_rect.ymax = 3.47
+    erase3_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
+    erase3_rect.xmax = 7.405; erase3_rect.ymax = 2.3
+    erase4_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
+    erase4_rect.xmax = 6.295; erase4_rect.ymax = 1.735
+    erase5_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
+    erase5_rect.xmax = 5.855; erase5_rect.ymax = 5.235
+
+    contact_only = active_pixel.extract(layers=[gf180mcu.LAYER.contact])
+    new_contact = gf.boolean(A=contact_only, B=erase, operation="A-B", layer=gf180mcu.LAYER.contact)
+    active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.contact], unlock=True)
+
+    active_pixel << new_contact
+
+    # Add COMP over photodiode contact
     '''
-    comp_cover = gf.Component()
-    comp_cover_rect = comp_cover << gf.components.rectangle(size=(1.4, 0.35), layer=gf180mcu.LAYER.comp)
-    comp_cover_rect.xmax = merged_nwell.xmax + 0.15
-    comp_cover_rect.ymax = merged_nwell.ymax - 3.7
+    contacts = gf.Component()
+    contact1_rect = contacts << gf.components.rectangle(size=(0.37, 0.37),layer=gf180mcu.LAYER.comp)
+    contact1_rect.xmax= 4.585;contact1_rect.ymax=4.775
 
-    active_pixel << comp_cover
+    active_pixel << contacts
     '''
 
-    # adding SAB and COMP layers over photodiode
-
+    # adding SAB over photodiode
     polys = merged_nwell.get_polygons()
 
     sab_source = gf.Component()
@@ -472,7 +488,7 @@ def active_pixel_3t(
             sab_source.add_polygon(poly, layer=gf180mcu.LAYER.sab)
 
     cutout = gf.Component()
-    cutout_rect = cutout << gf.components.rectangle(size=(0.864, 0.674), layer=gf180mcu.LAYER.sab)
+    cutout_rect = cutout << gf.components.rectangle(size=(0.964, 0.674), layer=gf180mcu.LAYER.sab)
     cutout_rect.xmax = merged_nwell.xmax - 1.7
     cutout_rect.ymax = merged_nwell.ymax
 
@@ -480,52 +496,38 @@ def active_pixel_3t(
 
     active_pixel << sab_final
 
-    # adding comp here now
+    # adding COMP over photodiode
+    comp1_ref = active_pixel << gf.components.rectangle(size=(body_contact.xmax - photodiode_ref.xmin - 0.64, (body_contact.ymin - 0.4) - row_enable.ymax - 0.44), layer=gf180mcu.LAYER.comp)
+    comp1_ref.ymin = row_enable.ymax + 0.22
+    comp1_ref.xmin = photodiode_ref.xmin + 0.22
 
-    '''
     comp_source = gf.Component()
-    for poly_list in polys.values():
-        for poly in poly_list:
-            comp_source.add_polygon(poly, layer=gf180mcu.LAYER.comp)
+    comp2_ref = comp_source << gf.components.rectangle(size=(5-0.44, 6.81-0.44),layer=gf180mcu.LAYER.comp)
+    comp2_ref.ymin = -1.815 + 0.22
+    comp2_ref.xmin = 0.22
 
-    cutout_1 = gf.Component()
-    cutout_1_rect = cutout_1 << gf.components.rectangle(size=(0,0), layer=gf180mcu.LAYER.comp)
-    cutout_1_rect.xmax = 0
-    cutout_1_rect.ymax = 0
+    compcut = gf.Component()
+    compcut_ref = compcut << gf.components.rectangle(size=(1.184, 0.892),layer=gf180mcu.LAYER.comp)
+    compcut_ref.xmax = merged_nwell.xmax - 1.7
+    compcut_ref.ymax = merged_nwell.ymax
 
-    cutout_2 = gf.Component()
-    cutout_2_rect = cutout_2 << gf.components.rectangle(size=(0,0), layer=gf180mcu.LAYER.comp)
-    cutout_2_rect.xmax = 0
-    cutout_2_rect.ymax = 0
-
-    cutout_3 = gf.Component()
-    cutout_3_rect = cutout_3 << gf.components.rectangle(size=(0,0), layer=gf180mcu.LAYER.comp)
-    cutout_3_rect.xmax = 0
-    cutout_3_rect.ymax = 0
-
-    cutout_4 = gf.Component()
-    cutout_4_rect = cutout_4 << gf.components.rectangle(size=(0,0), layer=gf180mcu.LAYER.comp)
-    cutout_4_rect.xmax = 0
-    cutout_4_rect.ymax = 0
-
-    cutout_5 = gf.Component()
-    cutout_5_rect = cutout_5 << gf.components.rectangle(size=(0,0), layer=gf180mcu.LAYER.comp)
-    cutout_5_rect.xmax = 0
-    cutout_5_rect.ymax = 0
-    
-    cutout_6 = gf.Component()
-    cutout_6_rect = cutout_6 << gf.components.rectangle(size=(0,0), layer=gf180mcu.LAYER.comp)
-    cutout_6_rect.xmax = 0
-    cutout_6_rect.ymax = 0
-
-    comp_final = gf.boolean(A=comp_source, B=cutout_1, C=cutout_2, D=cutout_3, E=cutout_4, F=cutout_5, G=cutout_6, operation="A-(B+C+D+E+F+G)", layer=gf180mcu.LAYER.sab)
+    comp_final = gf.boolean(A=comp_source, B=compcut, operation="A-B", layer=gf180mcu.LAYER.comp)
 
     active_pixel << comp_final
-    '''
-   # if (dark == True):
-   #     active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.sab], unlock=True)
 
-    # seems there is already COMP layers by default over transistors
+    merged_comp = gf.Component()
+    for layer, polygons in active_pixel.get_polygons(merge=True, layers=[gf180mcu.LAYER.comp]).items():
+        for polygon in polygons:
+            merged_comp.add_polygon(polygon, layer=layer)
+
+    active_pixel = active_pixel.remove_layers(
+        layers=[gf180mcu.LAYER.comp], unlock=True)
+    active_pixel.add_ref(merged_comp)
+    '''
+    # create a dark column of pixels
+    if (dark == True):
+        active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.sab], unlock=True)
+    '''
 
     return active_pixel
 
