@@ -13,7 +13,7 @@ BYTES_PER_ROW = COLS // 2
 
 image1 = "img3_center_square.npy"
 image2 = "img_all_ones.npy"
-image3 = "img_all_zeros.npy"
+image3 = "img1_checkerboard.npy"
 
 #load test image from test_images folder
 def load_img(filename):

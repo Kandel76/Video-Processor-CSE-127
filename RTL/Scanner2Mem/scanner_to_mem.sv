@@ -21,6 +21,7 @@ module scanner_to_mem #(
     // To mem2vga / hmem_access write port
     output logic [15:0]               waddr_i,
     output logic [7:0]                wdata_i,
+    output logic [0:0]                wvalid_o, //to mem2vga stating that data is valid (set on the drain stage)
     input  logic                      wready_o
 );
 
@@ -56,6 +57,7 @@ module scanner_to_mem #(
     assign waddr_i = (row_q * BYTES_PER_ROW) + byte_idx_q;
     assign wdata_i = {row_data_q[byte_idx_q * 8 +: 4],      // even pixel (2i)   -> [7:4]
                       row_data_q[byte_idx_q * 8 + 4 +: 4]}; // odd pixel  (2i+1) -> [3:0]
+    assign wvalid_o = (state_q == DRAIN);
 
     always_comb begin
         state_d    = state_q;
