@@ -7,6 +7,3 @@
 [submodule "synthesis/gf180mcu-project-template-3V/libs/gf180mcu_ocd_ip_sram"]
 	path = synthesis/gf180mcu-project-template-3V/libs/gf180mcu_ocd_ip_sram
 	url = https://github.com/RTimothyEdwards/gf180mcu_ocd_ip_sram.git
-[submodule "photodiode/OPENIMAGESENSOR"]
-	path = photodiode/OPENIMAGESENSOR
-	url = https://github.com/njcoburn/OPENIMAGESENSOR
