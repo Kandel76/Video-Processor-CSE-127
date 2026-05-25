@@ -449,5 +449,5 @@ gf180mcu.PDK.activate()
 
 com = active_pixel_3t()
 c = gf.Component()
-c.add_ref(com, rows=300, columns=500, row_pitch=com.xsize, column_pitch=com.ysize)
+c.add_ref(com, rows=1, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
 c.show()

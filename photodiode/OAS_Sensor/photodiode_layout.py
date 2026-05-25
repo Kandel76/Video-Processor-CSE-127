@@ -37,8 +37,9 @@ def nwell_psub_photodiode(width: int = 5, nplus_contact_distacne_from_top_of_nwe
         gf180mcu.cells.via_stack(x_range=(0, contact_size), y_range=(0, contact_size)))
 
     rounded_corner_width_and_height = gf.kcl.dbu * router
+    # Increased size of nplus to meet requirements for COMP coverage
     nplus = photo_diode_rounded.add_ref(gf.components.rectangle(size=(
-        0.6, contact_layer.ysize + (0.6 - contact_layer.xsize)), layer=gf180mcu.LAYER.nplus))
+        0.6 + 0.17, 0.17 + contact_layer.ysize + (0.6 - contact_layer.xsize)), layer=gf180mcu.LAYER.nplus))
     nplus.dxmax = photo_diode_rounded.dxmax - rounded_corner_width_and_height + \
         nplus_contact_additional_offset_from_left
     nplus.dymax = photo_diode_rounded.dymax - \
@@ -454,13 +455,13 @@ def active_pixel_3t(
     erase = gf.Component()
 
     erase1_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
-    erase1_rect.xmax = 6.895; erase1_rect.ymax = 4.115
+    erase1_rect.xmax = 6.895; erase1_rect.ymax = 4.03
     erase2_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
-    erase2_rect.xmax = 7.405; erase2_rect.ymax = 3.47
+    erase2_rect.xmax = 7.405; erase2_rect.ymax = 3.385
     erase3_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
-    erase3_rect.xmax = 7.405; erase3_rect.ymax = 2.3
+    erase3_rect.xmax = 7.405; erase3_rect.ymax = 2.215
     erase4_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
-    erase4_rect.xmax = 6.295; erase4_rect.ymax = 1.735
+    erase4_rect.xmax = 6.295; erase4_rect.ymax = 1.65
     erase5_rect = erase << gf.components.rectangle(size=(0.22,0.22),layer=gf180mcu.LAYER.contact)
     erase5_rect.xmax = 5.855; erase5_rect.ymax = 5.235
 
@@ -471,13 +472,11 @@ def active_pixel_3t(
     active_pixel << new_contact
 
     # Add COMP over photodiode contact
-    '''
     contacts = gf.Component()
-    contact1_rect = contacts << gf.components.rectangle(size=(0.37, 0.37),layer=gf180mcu.LAYER.comp)
-    contact1_rect.xmax= 4.585;contact1_rect.ymax=4.775
+    contact1_rect = contacts << gf.components.rectangle(size=(0.45, 0.45),layer=gf180mcu.LAYER.comp)
+    contact1_rect.xmax= 4.54;contact1_rect.ymax=4.73
 
     active_pixel << contacts
-    '''
 
     # adding SAB over photodiode
     polys = merged_nwell.get_polygons()
@@ -488,7 +487,7 @@ def active_pixel_3t(
             sab_source.add_polygon(poly, layer=gf180mcu.LAYER.sab)
 
     cutout = gf.Component()
-    cutout_rect = cutout << gf.components.rectangle(size=(0.964, 0.674), layer=gf180mcu.LAYER.sab)
+    cutout_rect = cutout << gf.components.rectangle(size=(0.964 + 0.4, 0.674 + 0.4), layer=gf180mcu.LAYER.sab)
     cutout_rect.xmax = merged_nwell.xmax - 1.7
     cutout_rect.ymax = merged_nwell.ymax
 
@@ -507,7 +506,7 @@ def active_pixel_3t(
     comp2_ref.xmin = 0.22
 
     compcut = gf.Component()
-    compcut_ref = compcut << gf.components.rectangle(size=(1.184, 0.892),layer=gf180mcu.LAYER.comp)
+    compcut_ref = compcut << gf.components.rectangle(size=(1.184 + 0.4, 0.892 + 0.4),layer=gf180mcu.LAYER.comp)
     compcut_ref.xmax = merged_nwell.xmax - 1.7
     compcut_ref.ymax = merged_nwell.ymax
 
@@ -523,11 +522,9 @@ def active_pixel_3t(
     active_pixel = active_pixel.remove_layers(
         layers=[gf180mcu.LAYER.comp], unlock=True)
     active_pixel.add_ref(merged_comp)
-    '''
     # create a dark column of pixels
     if (dark == True):
         active_pixel = active_pixel.remove_layers(layers=[gf180mcu.LAYER.sab], unlock=True)
-    '''
 
     return active_pixel
 
@@ -544,12 +541,10 @@ dark_row = active_pixel_3t(dark = True)
 c = gf.Component()
 #active_pixels = c.add_ref(com, rows=240, columns=320, row_pitch=com.xsize, column_pitch=com.ysize)
 #dark_pixels = c.add_ref(dark_row, rows=240, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
-active_pixels = c.add_ref(com, rows=1, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
+active_pixels = c.add_ref(com, rows=5, columns=5, row_pitch=com.xsize, column_pitch=com.ysize)
 #dark_pixels = c.add_ref(dark_row, rows=1, columns=1, row_pitch=com.xsize, column_pitch=com.ysize)
 
-'''
-active_pixels.xmin = dark_pixels.xmax
-active_pixels.ymin = dark_pixels.ymin
-'''
+#active_pixels.xmin = dark_pixels.xmax
+#active_pixels.ymin = dark_pixels.ymin
 
 c.show()
