@@ -16,6 +16,12 @@ def load_img(filename):
     return np.load(f"../test_images/{filename}")
 
 
+def load_any_img(filepath, rows=240, cols=320):
+    from PIL import Image
+    img = Image.open(filepath).convert("L").resize((cols, rows), Image.LANCZOS)
+    return (np.array(img, dtype=np.uint8) >> 4)  # 8-bit (0-255) → 4-bit (0-15)
+
+
 async def reset_dut(dut):
     dut.rst_n.value = 0
     dut.frame_start.value = 0
@@ -27,7 +33,7 @@ async def reset_dut(dut):
 
 
 # ── Off-chip SRAM simulation ──────────────────────────────────────────────────
-# Adapted from VGA/mem2vga/cocotb/test_mem2vga.py.
+# Adapted from Ben's test_mem2vga.py.
 # hmem_access uses nCS1_o for addresses 0x0000–0x7FFF,
 #               and nCS2_o for addresses 0x8000–0xFFFF.
 
@@ -72,82 +78,44 @@ def get_cmp_o(row_pixels, threshold, cmp_width, dark_ref=0):
     return "".join(reversed(bits))
 
 
+# ── Sensor driver (runs as a background coroutine) ────────────────────────────
+
+async def drive_sensor(dut, image, ROWS, COLS):
+    dut.frame_start.value = 1
+    await ClockCycles(dut.clk, 1)
+    dut.frame_start.value = 0
+
+    for _ in range(2_000_000):
+        threshold = int(dut.duty_cycle.value)
+        row = int(dut.current_row.value)
+        print(f"Sensor: row={row}, threshold={threshold}")
+        if row < ROWS:
+            dut.cmp_o.value = get_cmp_o(image[row, :COLS], threshold, COLS + 1)
+        else:
+            dut.cmp_o.value = 0
+        await RisingEdge(dut.clk)
+        if int(dut.frame_done.value) == 1:
+            dut._log.info("Sensor: frame_done")
+            return
+
+    assert False, "Sensor timed out waiting for frame_done"
+
+
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
 @cocotb.test()
-async def smoke_test(dut):
+async def full_system_test(dut):
     """
-    End-to-end smoke test
-    1.Run the image sensor until frame_done is asserted.
-    2.Verify VGA sync is live: active_o pulses 3 times.
-    """
-    ROWS = int(dut.ROWS.value)
-    COLS = int(dut.COLS.value)
-    dut._log.info(f"Frame size from DUT: {ROWS} rows x {COLS} cols")
-
-    cocotb.start_soon(Clock(dut.clk,     CLK_PERIOD_NS,     unit="ns").start())
-
-    await reset_dut(dut)
-
-    sram.clear()
-    #runs in the background
-    cocotb.start_soon(simulate_sram_chip1(dut))
-    cocotb.start_soon(simulate_sram_chip2(dut))
-
-    image = load_img(test_image)
-
-    dut.frame_start.value = 1
-    await ClockCycles(dut.clk, 1)
-    dut.frame_start.value = 0
-
-    # Drive comparators until frame_done
-    for cycle in range(2_000_000):
-        threshold = int(dut.duty_cycle.value)
-        row = int(dut.current_row.value)
-        if row < image.shape[0]:
-            dut.cmp_o.value = get_cmp_o(image[row, :COLS], threshold, COLS + 1)
-        else:
-            dut.cmp_o.value = 0
-        await RisingEdge(dut.clk)
-        if int(dut.frame_done.value) == 1:
-            dut._log.info(f"frame_done at cycle {cycle}")
-            break
-    else:
-        assert False, "Timed out waiting for frame_done"
-
-    # Verify VGA sync: active_o pulses 3 times
-    for pulse in range(3):
-        for _ in range(1_000_000):
-            await RisingEdge(dut.clk)
-            if int(dut.active_o.value) == 1:
-                break
-        else:
-            assert False, f"active_o never went high (pulse {pulse})"
-        for _ in range(1_000_000):
-            await RisingEdge(dut.clk)
-            if int(dut.active_o.value) == 0:
-                break
-        else:
-            assert False, f"active_o never went low (pulse {pulse})"
-
-    dut._log.info("VGA active_o pulsed 3 times — full pipeline running")
-
-
-@cocotb.test()
-async def vga_capture_test(dut):
-    """
-    Capture one full VGA frame to vga_out_full_system.bmp.
-
-    Run with ROWS=240, COLS=320 top parameters for a real image.
-    With ROWS=4 / COLS=4 the BMP will be mostly black except for the
-    top-left corner where the 4x4 sensor data lands.
+    Single end-to-end test: sensor and mem2vga run concurrently, matching
+    real hardware behaviour. The sensor drives comparators in the background
+    while the main coroutine waits for frame_done then immediately captures
+    the VGA output to vga_out_full_system.bmp.
     """
     ROWS = int(dut.ROWS.value)
     COLS = int(dut.COLS.value)
     dut._log.info(f"Frame size from DUT: {ROWS} rows x {COLS} cols")
 
-    cocotb.start_soon(Clock(dut.clk,     CLK_PERIOD_NS,     unit="ns").start())
-
+    cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
     await reset_dut(dut)
 
     sram.clear()
@@ -156,25 +124,14 @@ async def vga_capture_test(dut):
 
     image = load_img(test_image)
 
-    dut.frame_start.value = 1
-    await ClockCycles(dut.clk, 1)
-    dut.frame_start.value = 0
+    # Sensor runs in background — mem2vga scans concurrently the whole time
+    cocotb.start_soon(drive_sensor(dut, image, ROWS, COLS))
 
-    for cycle in range(2_000_000):
-        threshold = int(dut.duty_cycle.value)
-        row = int(dut.current_row.value)
-        if row < image.shape[0]:
-            dut.cmp_o.value = get_cmp_o(image[row, :COLS], threshold, COLS + 1)
-        else:
-            dut.cmp_o.value = 0
-        await RisingEdge(dut.clk)
-        if int(dut.frame_done.value) == 1:
-            dut._log.info(f"Sensor frame_done at cycle {cycle}, waiting for VGA scan-out")
-            break
-    else:
-        assert False, "Timed out waiting for frame_done"
+    # Wait for the sensor to finish writing the frame into SRAM
+    await RisingEdge(dut.frame_done)
+    dut._log.info("frame_done received — capturing next VGA frame")
 
-    # BMP header: 640x480, 24-bit color (same format as VGA/mem2vga/cocotb/test_mem2vga.py)
+    # BMP header: 640x480, 24-bit colour
     bmp_header = (
         bytearray([0x42, 0x4D, 0x36, 0x6C, 0x00, 0x00, 0x00, 0x00]) +
         bytearray([0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00]) +
@@ -188,8 +145,9 @@ async def vga_capture_test(dut):
     with open("vga_out_full_system.bmp", "wb") as f:
         f.write(bmp_header)
 
+
         # BMP stores rows bottom-to-top; VGA scans top-to-bottom.
-        # Iterating j from 479→0 while awaiting each active_o rising edge
+        # Iterating from 479→0 while awaiting each active_o rising edge
         # maps VGA line 0 → BMP row 479 (bottom) and VGA line 479 → BMP row 0 (top).
         for _ in range(479, -1, -1):
             await RisingEdge(dut.active_o)

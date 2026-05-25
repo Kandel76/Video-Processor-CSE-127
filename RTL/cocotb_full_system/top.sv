@@ -62,7 +62,7 @@ module top #(
     logic                   row_data_ready;
 
     // Internal write bus connecting scanner_to_mem -> mem2vga
-    logic [15:0]            waddr_w;a 213
+    logic [15:0]            waddr_w;
     logic [7:0]             wdata_w;
     logic                   wready_w;
     logic                   wvalid_w;
