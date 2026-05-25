@@ -1,3 +1,6 @@
-# Open Image Sensor
+Running 'make oas' in main directory will create the oas file described in "photodiode\_layout.py"
 
-A fully open source GDSFactory CMOS active pixel sensor.
+Below are the steps for manually doing so:
+
+TODO
+
