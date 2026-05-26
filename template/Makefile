@@ -6,9 +6,9 @@ ROOT := $(shell git rev-parse --show-toplevel)
 
 # This section is for "make oas", which generates the oas files
 
-OAS_DIR := $(ROOT)/ip/photodiode/OAS_Sensor
+OAS_DIR := $(ROOT)/template/ip/photodiode/OAS_Sensor
 GF_DIR := $(OAS_DIR)/gf180mcu
-VENV := $(ROOT)/.venv
+VENV := $(ROOT)/template/.venv
 GFENV := $(GF_DIR)/.venv
 
 .PHONY: setup gf180 oas
@@ -41,7 +41,7 @@ oas: setup gf180
 
 # This section is for "make lef", which generates the lef file
 
-PHOTO_DIR :=$(ROOT)/ip/photodiode
+PHOTO_DIR :=$(ROOT)/template/ip/photodiode
 
 .PHONY: lef
 
