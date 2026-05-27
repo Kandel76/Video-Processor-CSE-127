@@ -7,7 +7,7 @@ TOPLEVEL_LANG ?= verilog
 #enable waveform generation
 WAVES ?= 1
 
-VERILOG_SOURCES += $(PWD)/../hmem_access.v
+VERILOG_SOURCES += $(PWD)/../../../src/output/hmem_access.v
 
 # name of the toplevel module being tested
 COCOTB_TOPLEVEL = hmem_access

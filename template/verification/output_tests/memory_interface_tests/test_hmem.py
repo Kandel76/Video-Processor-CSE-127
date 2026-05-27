@@ -68,7 +68,7 @@ async def external_mem1(dut):    # simulated external memory 1
                 if (int(dut.addr_o.value) in sim_memory.keys()):
                     await Timer(85, unit="ns")
                     dut.data_i.value = sim_memory[int(dut.addr_o.value)]
-                else:
+                elif (dut.addr_o.value != 0):
                     print(" ! ERROR: MEM1: Attempted to access nonexistent memory address", int(dut.addr_o.value))
 
 async def external_mem2(dut):    # simulated external memory 2
@@ -120,6 +120,7 @@ async def small_test(dut):
     dut.wdata_i.value = 0
     dut.raddr_i.value = 0
     dut.data_i.value = 0
+    dut.wvalid_i.value = 0
 
     await FallingEdge(dut.reset)
     await FallingEdge(dut.clk)
@@ -131,6 +132,7 @@ async def small_test(dut):
     for i in range(32):
         dut.waddr_i.value = int(i + 10)
         dut.wdata_i.value = i
+        dut.wvalid_i.value = 1
         for _ in range(6):
             await FallingEdge(dut.clk)
 
