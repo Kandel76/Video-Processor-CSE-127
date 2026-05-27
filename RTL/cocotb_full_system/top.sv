@@ -15,7 +15,7 @@ module top #(
     // Comparator results driven by cocotb (one bit per column + dark ref)
     input  logic [COLS:0]                     cmp_o,
 
-    output logic [3:0]                        duty_cycle,   //digital "reference voltage"
+    output logic [3:0]                        duty_cycle,   //digital "reference voltage" ---- REMOVE FOR CHIP CORE -- only for simulation
 
     // Status outputs // not necessary but useful
     output logic                              adc_read_en,  //status only

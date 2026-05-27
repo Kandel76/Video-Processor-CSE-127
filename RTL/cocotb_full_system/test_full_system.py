@@ -83,7 +83,6 @@ def get_cmp_o(row_pixels, threshold, cmp_width, dark_ref=0):
 async def drive_sensor(dut, image, ROWS, COLS):
     dut.frame_start.value = 1
     await ClockCycles(dut.clk, 1)
-    dut.frame_start.value = 0
 
     for _ in range(2_000_000):
         threshold = int(dut.duty_cycle.value)
