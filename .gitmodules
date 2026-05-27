@@ -1,6 +1,3 @@
-[submodule "ADC_LogiCompilation-gf180"]
-	path = ADC_LogiCompilation-gf180
-	url = https://github.com/Gior-gio/ADC_LogiCompilation-gf180
 [submodule "synthesis/gf180mcu-project-template-3V/libs/gf180mcu_as_sc_mcu7t3v3"]
 	path = synthesis/gf180mcu-project-template-3V/libs/gf180mcu_as_sc_mcu7t3v3
 	url = https://github.com/AvalonSemiconductors/gf180mcu_as_sc_mcu7t3v3.git
