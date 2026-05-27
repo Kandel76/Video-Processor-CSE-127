@@ -4,17 +4,29 @@ module top #(
     parameter int ROWS               = 240,
     parameter int COLS               = 320,  //dimensions of diode array (321, including dark reference column (includeing zero))
     parameter int DATA_BITS          = 4,
-    parameter int RESET_CYCLES       = 10,  //CHANGE THIS
-    parameter int INTEGRATION_CYCLES = 10,  //CHANGE THIS
+    parameter int RESET_CYCLES       = 10, //keep these low for faster sim --- CHANGE FOR CHIP CORE -----
+    parameter int INTEGRATION_CYCLES = 10,
     parameter int RAMP_TIME          = 213 //should be atleast 213
 )(
     input  logic                              clk,       //25MHz main clock
     input  logic                              pwm_clk,   //100MHz clk for PWM generator)
 
-    input  logic                              rst_n, //active low
 
-    // Comparator results  --- is this needed?? maybe use verilog model comparator
+    input  logic                              rst_n, //active low
+    input  logic                              frame_start, //cocotb drives this (stays high stays high for CHIP CORE)
+
+    // Comparator results driven by cocotb (one bit per column + dark ref)
     input  logic [COLS:0]                     cmp_o,
+
+    //digital "reference voltage" ---- REMOVE FOR CHIP CORE -- (acts as reference voltage for simulation puropose)
+    output logic [3:0]                        duty_cycle,   
+
+    // Status outputs // not necessary but useful
+    output logic                              adc_read_en,  //status only
+    output logic [$clog2(ROWS)-1:0]           current_row,
+    output logic                              row_data_valid,
+    output logic                              row_done,
+    output logic                              frame_done,
 
     // VGA outputs
     output logic                              hsync_o,
@@ -31,19 +43,17 @@ module top #(
     output logic [7:0]                        mem_data_o,
     input  logic [7:0]                        mem_data_i,
 
-    //RC FILTER OUTPUT
+    //PWM output for off chip RC filter
     output logic                              pwm_out
 
 );
 
     localparam ADC_DATA_W    = DATA_BITS * (COLS + 1); //+1 for dark reference column
-    localparam ROW_DATA_BUS_W = DATA_BITS * COLS; //not including dark col
+    localparam ROW_DATA_BUS_W = DATA_BITS * COLS;
 
-    //reset bridge
     logic global_reset;
     assign global_reset = ~rst_n;
 
-    //internal signals
     logic                   reset_adc, valid_voltage, last_step;
     logic                   ramp_start;
     logic                   comp_done;
