@@ -23,3 +23,6 @@ PWM CLK = 100Mhz
 to run the spice simulation
 ''ngspice -b rc_test.spice''
 
+can plot by using python
+''python3 plot.py''
+
