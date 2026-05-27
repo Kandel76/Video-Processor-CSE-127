@@ -1,3 +1,6 @@
+//combines the ramp controller, scanner, and memory interface modules into a single top-level module.
+//for sim purpose, comparator output driven by cocotb
+//NOT USED FOR SYNTHESIS
 `timescale 1ns/1ps
 
 module top #(
