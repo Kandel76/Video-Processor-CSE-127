@@ -7,11 +7,12 @@ TOPLEVEL_LANG ?= verilog
 #enable waveform generation
 WAVES ?= 1
 
-VERILOG_SOURCES += $(PWD)/../mem2vga.v
-VERILOG_SOURCES += $(PWD)/../sync_manager.v
-VERILOG_SOURCES += $(PWD)/../double_buffer.v
-VERILOG_SOURCES += $(PWD)/../../onchipmem/gf180mcu_ocd_ip_sram__sram256x8m8wm1.v
-VERILOG_SOURCES += $(PWD)/../../hitachimem/hmem_access.v
+VERILOG_SOURCES += $(PWD)/../../../src/output/mem2vga.v
+VERILOG_SOURCES += $(PWD)/../../../src/output/sync_manager.v
+VERILOG_SOURCES += $(PWD)/../../../src/output/double_buffer.v
+VERILOG_SOURCES += $(PWD)/../../../src/output/hmem_access.v
+
+VERILOG_SOURCES += $(PWD)/../../../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram__sram256x8m8wm1.v
 
 # name of the toplevel module being tested
 COCOTB_TOPLEVEL = mem2vga
