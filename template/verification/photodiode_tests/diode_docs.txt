@@ -1,0 +1,44 @@
+This is a short file going over all the parameters in the ngspice diode model.
+
+All information was found from "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf" from pg. 132-141. Additional helpful reading is from "https://ltwiki.org/files/SPICEdiodeModel.pdf".
+
+Model is located in sm141064.ngspice called "diode_nw2ps_03v3".
+
+I have copy pasted it below with the default values with a short description and units to the right.
+
+.model  diode_nw2ps_03v3  d  level = 3
++area    = 1.6e-009                     //area of diode (m^2)**
++pj      = 0.00016			//perimeter of diode (m)**
++tref    = 25				//reference temperature (C)
++is      = '1.5654e-006 * jsa'		//saturation current (A)***
++jsw     = '1.6912e-012 * jsa'		//sidewall saturation current (A)*
++ik      = 300000			//forward knee current (A)**
++bv      = 11				//reverse breakdown voltage (V)
++ibv     = 0.001			//current at breakdown voltage (A)**
++n       = 1.01				//emission coefficient	
++rs      = '2e-010 * rsa'		//series resistance (ohms)*
++jtun    = 0.00037353			//tunneling saturation current (A)
++jtunsw  = 3.0737e-011			//tunneling sidewall saturation current (A)
++ntun    = 22				//tunneling emission coefficient
++cjo      = '0.00014917* cja'		//zero-bias junction bottom-wall capacitance (F)*
++cjp     = '5.8113e-010*cjswa'		//zero-bias junction sidewall capacitance (F)***
++vj      = 0.5755			//junction potential (V)
++php     = 0.55456			//periphery junction potential (V)
++mj      = 0.33979			//area junction grading coefficient
++mjsw    = 0.2257			//periphery junction grading coefficient
++tlev    = 1				//diode temperature equation selector
++tlevc   = 1				//diode capac, temperature equation selector
++trs     = 3.8628e-005			//1st order tempco for RS (1/C)
++xti     = 3				//saturation current temperature exponent
++xtitun  = -46				//tunneling saturation current exponential
++cta     = 0.0023998			//area junct. cap. temperature coefficient (1/C)
++ctp     = 0.0010977			//perimeter junct. cap. temperature coefficient (1/C)
++eg      = 1.18				//activation energy (eV)
++tpb     = 0.0027641			//not sure, some sort of junction potential (V)?
++tphp    = 0.0019629			//not sure, some sort of periphery junction potential (V)?
+
+*variables like jsa, rsa, etc. are determined by the process corner. The options being diode_typical, diode_ss, and diode_ff.
+
+**Certain parameters are additionally scaled by area, pj and m? From what I can tell, area and pj should just be entered as is, due to process corner doing the necessary scaling.
+
+After reading up on all of these parameters, it seems almost all of them should be left alone, and again just change the top 3, and maybe mj. I really am not sure how mj works. Ngspice mentions both a mj and m, and aren't super clear, but I assume them to be different.
