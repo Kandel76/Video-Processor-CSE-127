@@ -20,7 +20,6 @@ module top #(
     output logic                              hsync_o,
     output logic                              vsync_o,
     output logic [11:0]                       pixel_o,
-    output logic                              active_o,
 
     // Off-chip SRAM interface (Hitachi memory)
     output logic [14:0]                       mem_addr_o,
