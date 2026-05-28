@@ -130,7 +130,7 @@ oas: setup gf180 ## Generate the photodiode OAS/GDS files
 
 	cd $(OAS_DIR)
 
-	python3 test.py
+	python3 photodiode_layout.py
 .PHONY: oas
 
 lef: ## Generate the photodiode LEF file
