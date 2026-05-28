@@ -131,11 +131,20 @@ oas: setup gf180 ## Generate the photodiode OAS/GDS files
 	cd $(OAS_DIR)
 
 	python3 photodiode_layout.py
+
+	cd $(MAKEFILE_DIR)
+	cd ..
+	mv build/ template/ip/photodiode
+
 .PHONY: oas
 
 lef: ## Generate the photodiode LEF file
 	source $(VENV)/bin/activate
 	cd $(PHOTO_DIR)
 	python3 photodiode_lef_generator.py
-	deactivate
+	cd build
+	mkdir lef
+	cd ..
+	mv PIXEL_ARRAY.lef build/lef/
+
 .PHONY: lef
