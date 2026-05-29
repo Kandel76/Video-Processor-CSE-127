@@ -13,7 +13,7 @@ sram = {}
 
 
 def load_img(filename):
-    return np.load(f"../test_images/{filename}")
+    return np.load(f"test_images/{filename}")
 
 
 def load_any_img(filepath, rows=240, cols=320):
@@ -47,6 +47,9 @@ async def simulate_sram_chip1(dut):
         await Timer(85, unit="ns")  # SRAM access time
         if action == FallingEdge(dut.mem_nWE_o):
             sram[addr] = int(dut.mem_data_o.value)
+        if action == FallingEdge(dut.mem_nWE_o):
+            sram[addr] = int(dut.mem_data_o.value)
+            dut._log.info(f"SRAM1 WRITE addr={addr} data={int(dut.mem_data_o.value)}")
         else:
             dut.mem_data_i.value = sram.get(addr, 0x00)
 
@@ -61,6 +64,9 @@ async def simulate_sram_chip2(dut):
         await Timer(85, unit="ns")
         if action == FallingEdge(dut.mem_nWE_o):
             sram[0x8000 | addr] = int(dut.mem_data_o.value)
+        if action == FallingEdge(dut.mem_nWE_o):
+            sram[0x8000 | addr] = int(dut.mem_data_o.value)
+            dut._log.info(f"SRAM2 WRITE addr={0x8000 | addr} data={int(dut.mem_data_o.value)}")
         else:
             dut.mem_data_i.value = sram.get(0x8000 | addr, 0x00)
 
@@ -99,6 +105,28 @@ async def drive_sensor(dut, image, ROWS, COLS):
 
     assert False, "Sensor timed out waiting for frame_done"
 
+# ── Build expected values from the input image ────────────────────>
+
+def expected_flat_image(image, ROWS, COLS):
+    return image[:ROWS, :COLS].astype(np.uint8).flatten()
+
+# ── Read pixel values back from the simulated SRAM ────────────────────>
+def read_sram_frame(ROWS, COLS):
+    total_pixels = ROWS * COLS
+    total_bytes = (total_pixels + 1) // 2
+
+    pixels = []
+
+    for addr in range(total_bytes):
+        byte = sram.get(addr, 0)
+
+        high_pixel = (byte >> 4) & 0xF
+        low_pixel = byte & 0xF
+
+        pixels.append(high_pixel)
+        pixels.append(low_pixel)
+
+    return np.array(pixels[:total_pixels], dtype=np.uint8)
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -157,3 +185,44 @@ async def full_system_test(dut):
                 f.write(bytearray([byte, byte, byte]))
 
     dut._log.info("VGA frame written to vga_out_full_system.bmp")
+
+@cocotb.test()
+async def full_sys_sram_check_test(dut):
+    """
+    verify that the expected image data is written into SRAM
+    """
+    ROWS = int(dut.ROWS.value)
+    COLS = int(dut.COLS.value)
+
+    dut._log.info(f"SRAM check: {ROWS} rows x {COLS} cols")
+    cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
+    await reset_dut(dut)
+
+    sram.clear()
+
+    cocotb.start_soon(simulate_sram_chip1(dut))
+    cocotb.start_soon(simulate_sram_chip2(dut))
+
+    image = load_img(test_image)
+
+    cocotb.start_soon(drive_sensor(dut, image, ROWS, COLS))
+
+    # wait for the frame to be fully written to SRAM
+    await RisingEdge(dut.frame_done)
+    await ClockCycles(dut.clk, 10)
+
+    # compare expected image pixels to SRAM's
+    expected = expected_flat_image(image, ROWS, COLS)
+    actual = read_sram_frame(ROWS, COLS)
+
+    dut._log.info(f"Expected SRAM: {expected}")
+    dut._log.info(f"Actual SRAM:   {actual}")
+
+    assert np.array_equal(actual, expected), (
+        f"SRAM mismatch\n"
+        f"Expected: {expected}\n"
+        f"Got:      {actual}"
+    )
+
+    dut._log.info("SRAM output matches expected image")
+
