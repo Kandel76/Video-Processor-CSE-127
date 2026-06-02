@@ -13,13 +13,13 @@ module top #(
 
     input  logic                              rst_n, //active low
 
-    // Comparator results  --- is this needed?? maybe use verilog model comparator
-    input  logic [COLS:0]                     cmp_o,
-
     // VGA outputs
     output logic                              hsync_o,
     output logic                              vsync_o,
     output logic [11:0]                       pixel_o,
+    
+    //needed for GL simulation -- move internally for Synthesis
+    logic [COLS:0] cmp_o; // comparator outputs feeding the SAR ADCs
 
     // Off-chip SRAM interface (Hitachi memory)
     output logic [14:0]                       mem_addr_o,
@@ -59,6 +59,19 @@ module top #(
     logic [7:0]             wdata_w;
     logic                   wready_w;
     logic                   wvalid_w;
+
+    logic [3:0]                  duty_cycle;
+    logic                        adc_read_en;
+    logic                        row_data_valid;
+    logic [$clog2(ROWS)-1:0]     current_row;
+    logic                        row_done;
+    logic                        frame_done;
+    logic                        active_o;
+
+    logic                        frame_start;
+    
+    assign frame_start = 1'b1; // continuous capture — restarts immediately after each frame
+
 
     assign comp_done = &comp_done_per[COLS:1];  // comp done when all columns (except dark ref) are done
 
