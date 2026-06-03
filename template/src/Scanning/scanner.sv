@@ -97,8 +97,11 @@ end
         row_cnt_d    = row_cnt_q;
         phase_cnt_d  = phase_cnt_q;
         row_data_d = row_data_q;
-        
-        
+
+        // Temporary variables — must have defaults to avoid latch inference
+        raw_value = '0;
+        ref_value = '0;
+
         // Default outputs
         frame_done    = 0;
         current_row   = row_cnt_q;
