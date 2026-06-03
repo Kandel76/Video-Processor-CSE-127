@@ -28,6 +28,16 @@ DESIGN_NAME: chip_top
 VERILOG_FILES:
 - dir::../src/chip_top.sv
 - dir::../src/chip_core.sv
+- dir::../src/top.sv
+- dir::../src/ADC/ramp_controller.sv
+- dir::../src/ADC/sar_adc.sv
+- dir::../src/ADC/pwm.sv
+- dir::../src/Scanning/scanner.sv
+- dir::../src/Scanning/scanner_to_mem.sv
+- dir::../src/output/mem2vga.v
+- dir::../src/output/sync_manager.v
+- dir::../src/output/double_buffer.v
+- dir::../src/output/hmem_access.v
 
 # Enable plugin for better SystemVerilog support
 # USE_SLANG: True
@@ -173,35 +183,6 @@ MACROS:
       wafer_space_logo:
         location: ["expr::$DIE_AREA[2] + -169.25", "expr::$DIE_AREA[3] + -169.25"]
         orientation: N
-
-  gf180mcu_fd_ip_sram__sram512x8m8wm1:
-    gds:
-      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/gds/gf180mcu_fd_ip_sram__sram512x8m8wm1.gds
-    lef:
-      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lef/gf180mcu_fd_ip_sram__sram512x8m8wm1.lef
-    vh:
-      - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/verilog/gf180mcu_fd_ip_sram__sram512x8m8wm1__blackbox.v
-    lib:
-      "*_tt_025C_5v00":
-        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__tt_025C_5v00.lib
-      "*_ff_n40C_5v50":
-        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__ff_n40C_5v50.lib
-      "*_ss_125C_4v50":
-        - pdk_dir::libs.ref/gf180mcu_fd_ip_sram/lib/gf180mcu_fd_ip_sram__sram512x8m8wm1__ss_125C_4v50.lib
-    instances:
-      # Make sure to specify the SRAMs in pdn_cfg.tcl
-      i_chip_core.sram_0:
-        location: [490, 500]
-        orientation: N
-      i_chip_core.sram_1:
-        location: [970, 500]
-        orientation: E
-
-# This is an alternative method compared to
-# specifying the power connections in the RTL
-PDN_MACRO_CONNECTIONS:
-- "i_chip_core.sram_0 VDD VSS VDD VSS"
-- "i_chip_core.sram_1 VDD VSS VDD VSS"
 
 # Halo size around macros while cutting rows.
 # Workaround for: https://github.com/The-OpenROAD-Project/OpenROAD/issues/8868

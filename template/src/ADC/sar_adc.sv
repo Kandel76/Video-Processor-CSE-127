@@ -69,7 +69,7 @@ always_comb begin
         default: state_n = IDLE; 
     endcase
 end
-always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
+always_ff @(posedge clk or posedge reset_signal) begin
     if (reset_signal) begin
         adc_code <= '0;
         adc_o <= '0;
@@ -78,15 +78,15 @@ always_ff @(posedge clk or posedge reset_signal or posedge adc_reset) begin
         adc_ready <= 1'b1;
         comp_done <= 1'b0;
         state <= IDLE;
-    end 
-    else if (adc_reset) begin
+    end
+    else if (adc_reset) begin  // synchronous — adc_reset is a registered ramp_controller output
         adc_code        <= '0;
         cmp_i           <= 1'b0;
         adc_done        <= 1'b0;
         adc_ready       <= 1'b1;
         comp_done       <= 1'b0;
         state           <= IDLE;
-    end 
+    end
     else begin
         state <= state_n; 
         // Default outputs

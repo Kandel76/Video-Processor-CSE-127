@@ -139,8 +139,9 @@ async def full_system_test(dut):
     while the main coroutine waits for frame_done then immediately captures
     the VGA output to vga_out_full_system.bmp.
     """
-    ROWS = int(dut.ROWS.value)
-    COLS = int(dut.COLS.value)
+    # Parameters are elaborated away in GL netlists — hardcode to match full_system.sv defaults
+    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 4
+    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 4
     dut._log.info(f"Frame size from DUT: {ROWS} rows x {COLS} cols")
 
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
@@ -192,8 +193,8 @@ async def full_sys_sram_check_test(dut):
     """
     verify that the expected image data is written into SRAM
     """
-    ROWS = int(dut.ROWS.value)
-    COLS = int(dut.COLS.value)
+    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 4
+    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 4
 
     dut._log.info(f"SRAM check: {ROWS} rows x {COLS} cols")
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())

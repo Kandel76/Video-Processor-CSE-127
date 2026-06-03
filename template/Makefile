@@ -81,8 +81,33 @@ librelane-padring: ## Only create the padring
 
 VERIFICATION_DIR := $(MAKEFILE_DIR)/verification
 SRC_DIR := $(MAKEFILE_DIR)/src
+GL_DIR := $(VERIFICATION_DIR)/full_system_tests/gl
 
 SIM_BANNER = @echo "" && echo "================================================================" && echo "  RUNNING: $(1)" && echo "================================================================"
+
+synth-gl: ## Synthesize full_system.sv to a gate-level netlist for GL simulation
+	mkdir -p $(GL_DIR)
+	yosys -p " \
+		read_verilog -sv \
+			$(VERIFICATION_DIR)/full_system_tests/full_system.sv \
+			$(SRC_DIR)/ADC/ramp_controller.sv \
+			$(SRC_DIR)/ADC/sar_adc.sv \
+			$(SRC_DIR)/ADC/pwm.sv \
+			$(SRC_DIR)/Scanning/scanner.sv \
+			$(SRC_DIR)/Scanning/scanner_to_mem.sv \
+			$(SRC_DIR)/output/mem2vga.v \
+			$(SRC_DIR)/output/sync_manager.v \
+			$(SRC_DIR)/output/double_buffer.v \
+			$(SRC_DIR)/output/hmem_access.v; \
+		synth -top top -flatten; \
+		write_verilog -noattr $(GL_DIR)/top_gl.v"
+	@echo "GL netlist written to $(GL_DIR)/top_gl.v"
+.PHONY: synth-gl
+
+sim-gl: ## Run GL simulation (run synth-gl first to produce the netlist)
+	$(call SIM_BANNER,sim-gl  --  gate-level full system simulation)
+	$(MAKE) -C $(VERIFICATION_DIR)/full_system_tests GL_SIM=1
+.PHONY: sim-gl
 
 sim-pwm: ## Run PWM unit test (iverilog)
 	$(call SIM_BANNER,sim-pwm  --  PWM unit test)
