@@ -1,5 +1,5 @@
 TOP  = scanner2mem_tb
-SRCS = scanner.sv scanner_to_mem.sv scanner_test_top.sv scanner2mem_tb.sv
+SRCS = ../../../src/Scanning/scanner.sv ../../../src/Scanning/scanner_to_mem.sv scanner_test_top.sv scanner2mem_tb.sv
 OUT  = scanner2mem_tb.out
 VCD  = scanner2mem_tb.vcd
 

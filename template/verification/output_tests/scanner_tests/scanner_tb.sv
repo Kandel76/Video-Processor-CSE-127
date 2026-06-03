@@ -16,7 +16,7 @@ module scanner_tb;
     logic [ROWS-1:0]                    row_reset;
     logic                               adc_read_en;
     logic                               comp_done;
-    logic [(DATA_BITS*ADC_BANKS)-1:0]   adc_data;
+    logic [(DATA_BITS*(ADC_BANKS+1))-1:0] adc_data;
     logic                               frame_start;
     logic                               pixel_ready;
     logic [$clog2(ROWS)-1:0]            pixel_row;
@@ -26,29 +26,30 @@ module scanner_tb;
     logic [(DATA_BITS*ADC_BANKS)-1:0]   pixel_data;
     logic                               adc_start;
 
-    scan_controller #(
+    scanner #(
         .ROWS              (ROWS),
         .ADC_BANKS         (ADC_BANKS),
         .DATA_BITS         (DATA_BITS),
         .RESET_CYCLES      (RESET_CYCLES),
         .INTEGRATION_CYCLES(INTEGRATION_CYCLES)
     ) dut (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .reset_adc    (reset_adc),
-        .row_enable   (row_enable),
-        .row_reset    (row_reset),
-        .adc_read_en  (adc_read_en),
-        .comp_done    (comp_done),
-        .adc_data     (adc_data),
-        .frame_start  (frame_start),
-        .pixel_ready  (pixel_ready),
-        .pixel_row    (pixel_row),
-        .pixel_valid  (pixel_valid),
-        .row_done     (row_done),
-        .frame_done   (frame_done),
-        .pixel_data   (pixel_data),
-        .adc_start     (adc_start)
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .ramp_done      (reset_adc),
+        .last_step      (1'b0),
+        .row_enable     (row_enable),
+        .row_reset      (row_reset),
+        .adc_read_en    (adc_read_en),
+        .adc_start      (adc_start),
+        .comp_done      (comp_done),
+        .adc_data       (adc_data),
+        .frame_start    (frame_start),
+        .row_data_ready (pixel_ready),
+        .current_row    (pixel_row),
+        .row_data_valid (pixel_valid),
+        .row_done       (row_done),
+        .frame_done     (frame_done),
+        .row_data       (pixel_data)
     );
 
     // 10ns clock
@@ -93,6 +94,7 @@ module scanner_tb;
         // ----------------------------------------------------------------
         // TEST 1: reset behaviour
         // ----------------------------------------------------------------
+        $display("");
         $display("=== TEST 1: reset ===");
         wait_cycles(3);
         rst_n = 1;
@@ -109,6 +111,7 @@ module scanner_tb;
         // ----------------------------------------------------------------
         // TEST 2: idle -- nothing should happen without frame_start
         // ----------------------------------------------------------------
+        $display("");
         $display("=== TEST 2: idle, no frame_start ===");
         wait_cycles(5);
 
@@ -123,6 +126,7 @@ module scanner_tb;
         //   step 0: comp_done=1, reset_adc=0  -> loops back to RESET_PIXELS
         //   step 1: comp_done=1, reset_adc=1  -> goes to OUTPUT_PIXELS
         // ----------------------------------------------------------------
+        $display("");
         $display("=== TEST 3: full frame ===");
         frame_start = 1;
         @(posedge clk); #1;
@@ -131,13 +135,14 @@ module scanner_tb;
         for (row = 0; row < ROWS; row++) begin
             $display("-- row %0d --", row);
 
-            // step 0: mid-ramp comparison, loop back
-            adc_data = {DATA_BITS*ADC_BANKS{1'b0}} | (row * 2);  // dummy data
+            // step 0: mid-ramp comparison, loop back (data not captured)
+            adc_data = '0;
             adc_compare_step(0);
 
             // step 1: final comparison, capture and output
+            // pixel data in bits [19:4]; bits [3:0] = dark reference = 0
             expected_pdata = {DATA_BITS*ADC_BANKS{1'b0}} | (row * 2 + 1);
-            adc_data = expected_pdata;
+            adc_data = {expected_pdata, {DATA_BITS{1'b0}}};
             adc_compare_step(1);
 
             // wait for pixel_valid handshake to complete
@@ -168,16 +173,17 @@ module scanner_tb;
         // ----------------------------------------------------------------
         // TEST 4: second frame starts cleanly
         // ----------------------------------------------------------------
+        $display("");
         $display("=== TEST 4: second frame ===");
         frame_start = 1;
         @(posedge clk); #1;
         frame_start = 0;
 
         // just do one row to confirm the FSM restarted
-        adc_data = 16'hABCD;
+        adc_data = '0;
         adc_compare_step(0);
         expected_pdata = 16'h1234;
-        adc_data = expected_pdata;
+        adc_data = {expected_pdata, {DATA_BITS{1'b0}}};
         adc_compare_step(1);
         @(posedge pixel_valid); #1;
 
@@ -189,6 +195,7 @@ module scanner_tb;
 
         wait_cycles(5);
 
+        $display("");
         $display("=== simulation complete ===");
         $finish;
     end

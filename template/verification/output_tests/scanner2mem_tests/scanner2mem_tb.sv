@@ -11,7 +11,7 @@ module scanner2mem_tb;
 
     logic clk, rst_n;
     logic frame_start, reset_adc, comp_done;
-    logic [(DATA_BITS*ADC_BANKS)-1:0] adc_data;
+    logic [(DATA_BITS*(ADC_BANKS+1))-1:0] adc_data;
 
     logic [ROWS-1:0]                  row_enable, row_reset;
     logic                             adc_read_en, adc_start;
@@ -91,9 +91,10 @@ module scanner2mem_tb;
         input [(DATA_BITS*ADC_BANKS)-1:0] pdata_mid,
         input [(DATA_BITS*ADC_BANKS)-1:0] pdata_final
     );
-        adc_data = pdata_mid;
-        adc_compare_step(0);         // intermediate comparison
-        adc_data = pdata_final;
+        // pixel data in bits [19:4]; bits [3:0] = dark reference = 0
+        adc_data = {pdata_mid, {DATA_BITS{1'b0}}};
+        adc_compare_step(0);         // intermediate comparison (data not captured)
+        adc_data = {pdata_final, {DATA_BITS{1'b0}}};
         adc_compare_step(1);         // final comparison -- latched as pixel_data
         @(posedge pixel_valid);      // wait for scan_ctrl to present data
         @(negedge pixel_valid);      // wait for scanner_to_mem to finish drain
@@ -113,7 +114,8 @@ module scanner2mem_tb;
         // ----------------------------------------------------------------
         // TEST 1: outputs clear after reset
         // ----------------------------------------------------------------
-        $display("=== TEST 1: reset ===");
+        $display("");
+        $display("=== TEST 1: outputs clear after reset ===");
         wait_cycles(3);
         rst_n = 1;
         wait_cycles(2);
@@ -127,6 +129,7 @@ module scanner2mem_tb;
         // TEST 2: full frame, memory always ready
         //   Verify sim_mem contains the correct bytes for each row.
         // ----------------------------------------------------------------
+        $display("");
         $display("=== TEST 2: full frame, always-ready memory ===");
         for (int i = 0; i < ROWS; i++)
             expected[i] = (i + 1) * {DATA_BITS'(4'hF), {(DATA_BITS*(ADC_BANKS-1)){1'b0}}} | (i+1);
@@ -147,12 +150,15 @@ module scanner2mem_tb;
 
         @(posedge frame_done);
         wait_cycles(1);
-
+        // scanner_to_mem packs each byte as {even_pixel[3:0], odd_pixel[3:0]}
+        // i.e. nibble-swapped within each byte (see scanner_to_mem.sv comment)
         for (int rr = 0; rr < ROWS; rr++) begin
             for (int b = 0; b < BYTES_PER_ROW; b++) begin
-                assert (sim_mem[rr * BYTES_PER_ROW + b] == expected[rr][b*8 +: 8])
+                assert (sim_mem[rr * BYTES_PER_ROW + b] ==
+                        {expected[rr][b*8 +: 4], expected[rr][b*8+4 +: 4]})
                     else $error("T2 FAIL row %0d byte %0d: got 0x%02h expected 0x%02h",
-                        rr, b, sim_mem[rr*BYTES_PER_ROW+b], expected[rr][b*8 +: 8]);
+                        rr, b, sim_mem[rr*BYTES_PER_ROW+b],
+                        {expected[rr][b*8 +: 4], expected[rr][b*8+4 +: 4]});
             end
         end
         $display("  PASS: sim_mem matches expected pixel data for all rows");
@@ -160,6 +166,7 @@ module scanner2mem_tb;
         // ----------------------------------------------------------------
         // TEST 3: memory stall -- wready_o=0 blocks drain, unstall completes
         // ----------------------------------------------------------------
+        $display("");
         $display("=== TEST 3: memory stall ===");
         wait_cycles(2);
         wready_o = 0;
@@ -167,8 +174,10 @@ module scanner2mem_tb;
         frame_start = 1; @(posedge clk); #1; frame_start = 0;
 
         // Drive row 0 to OUTPUT_PIXELS
-        adc_data = '0;    adc_compare_step(0);
-        adc_data = 16'hCAFE; adc_compare_step(1);
+        adc_data = '0;
+        adc_compare_step(0);
+        adc_data = {16'hCAFE, {DATA_BITS{1'b0}}};
+        adc_compare_step(1);
 
         @(posedge pixel_valid);
         wait_cycles(8);  // pixel_valid stays high (stalled)
@@ -179,11 +188,14 @@ module scanner2mem_tb;
         wready_o = 1;
         @(negedge pixel_valid);
         // Check the two bytes were written correctly
-        assert (sim_mem[0] == 8'hFE) else $error("T3: byte 0 = 0x%02h, expected 0xFE", sim_mem[0]);
-        assert (sim_mem[1] == 8'hCA) else $error("T3: byte 1 = 0x%02h, expected 0xCA", sim_mem[1]);
+        // 0xCAFE → row_data[3:0]=E, [7:4]=F, [11:8]=A, [15:12]=C
+        // byte 0: {E, F} = 0xEF; byte 1: {A, C} = 0xAC
+        assert (sim_mem[0] == 8'hEF) else $error("T3: byte 0 = 0x%02h, expected 0xEF", sim_mem[0]);
+        assert (sim_mem[1] == 8'hAC) else $error("T3: byte 1 = 0x%02h, expected 0xAC", sim_mem[1]);
         $display("  PASS: correct bytes written after un-stall");
 
         wait_cycles(5);
+        $display("");
         $display("=== simulation complete ===");
         $finish;
     end

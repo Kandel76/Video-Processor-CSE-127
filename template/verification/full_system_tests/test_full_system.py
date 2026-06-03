@@ -13,7 +13,8 @@ sram = {}
 
 
 def load_img(filename):
-    return np.load(f"test_images/{filename}")
+    # loads from the shared 4x4 test images directory (../test_images/)
+    return np.load(f"../test_images/{filename}")
 
 
 def load_any_img(filepath, rows=240, cols=320):
@@ -49,7 +50,7 @@ async def simulate_sram_chip1(dut):
             sram[addr] = int(dut.mem_data_o.value)
         if action == FallingEdge(dut.mem_nWE_o):
             sram[addr] = int(dut.mem_data_o.value)
-            dut._log.info(f"SRAM1 WRITE addr={addr} data={int(dut.mem_data_o.value)}")
+            # dut._log.info(f"SRAM1 WRITE addr={addr} data={int(dut.mem_data_o.value)}")
         else:
             dut.mem_data_i.value = sram.get(addr, 0x00)
 
@@ -66,7 +67,7 @@ async def simulate_sram_chip2(dut):
             sram[0x8000 | addr] = int(dut.mem_data_o.value)
         if action == FallingEdge(dut.mem_nWE_o):
             sram[0x8000 | addr] = int(dut.mem_data_o.value)
-            dut._log.info(f"SRAM2 WRITE addr={0x8000 | addr} data={int(dut.mem_data_o.value)}")
+            # dut._log.info(f"SRAM2 WRITE addr={0x8000 | addr} data={int(dut.mem_data_o.value)}")
         else:
             dut.mem_data_i.value = sram.get(0x8000 | addr, 0x00)
 
@@ -93,7 +94,7 @@ async def drive_sensor(dut, image, ROWS, COLS):
     for _ in range(2_000_000):
         threshold = int(dut.duty_cycle.value)
         row = int(dut.current_row.value)
-        print(f"Sensor: row={row}, threshold={threshold}")
+        # print(f"Sensor: row={row}, threshold={threshold}")
         if row < ROWS:
             dut.cmp_o.value = get_cmp_o(image[row, :COLS], threshold, COLS + 1)
         else:

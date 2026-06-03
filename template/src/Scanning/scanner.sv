@@ -161,10 +161,10 @@ end
             OUTPUT_PIXELS: begin
                 row_data_valid_d = 1;
 
-                //this is for the other modules taking in pixel data
-                if (row_data_ready) begin
+                // only accept handshake after valid has been registered for one cycle
+                if (row_data_ready && row_data_valid_q) begin
                     row_data_valid_d = 0;
-                    state_d = NEXT_ROW; //next state
+                    state_d = NEXT_ROW;
                 end
             end
 

@@ -79,13 +79,59 @@ librelane-padring: ## Only create the padring
 	PDK_ROOT=${PDK_ROOT} PDK=${PDK} python3 scripts/padring.py librelane/slots/slot_${SLOT}.yaml librelane/config.yaml
 .PHONY: librelane-padring
 
-sim: ## Run RTL simulation with cocotb
-	cd cocotb; PDK_ROOT=${PDK_ROOT} PDK=${PDK} SLOT=${SLOT} python3 chip_top_tb.py
-.PHONY: sim
+VERIFICATION_DIR := $(MAKEFILE_DIR)/verification
+SRC_DIR := $(MAKEFILE_DIR)/src
 
-sim-gl: ## Run gate-level simulation with cocotb (after a LibreLane run)
-	cd cocotb; GL=1 PDK_ROOT=${PDK_ROOT} PDK=${PDK} SLOT=${SLOT} python3 chip_top_tb.py
-.PHONY: sim-gl
+SIM_BANNER = @echo "" && echo "================================================================" && echo "  RUNNING: $(1)" && echo "================================================================"
+
+sim-pwm: ## Run PWM unit test (iverilog)
+	$(call SIM_BANNER,sim-pwm  --  PWM unit test)
+	cd $(VERIFICATION_DIR)/ADC_tests && \
+	iverilog -g2012 -o pwm_tb.out pwm_tb.v $(SRC_DIR)/ADC/pwm.sv && \
+	vvp pwm_tb.out && \
+	rm -f pwm_tb.out
+.PHONY: sim-pwm
+
+sim-scanner: ## Run scanner unit test (iverilog)
+	$(call SIM_BANNER,sim-scanner  --  scanner FSM unit test)
+	$(MAKE) -C $(VERIFICATION_DIR)/output_tests/scanner_tests
+.PHONY: sim-scanner
+
+sim-scanner2mem: ## Run scanner-to-memory unit test (iverilog)
+	$(call SIM_BANNER,sim-scanner2mem  --  scanner-to-memory pipeline test)
+	$(MAKE) -C $(VERIFICATION_DIR)/output_tests/scanner2mem_tests
+.PHONY: sim-scanner2mem
+
+sim-backend: ## Run backend top simulation (cocotb; run: pip install cocotb)
+	$(call SIM_BANNER,sim-backend  --  backend top simulation)
+	$(MAKE) -C $(VERIFICATION_DIR)/backend_top_tests sim_top
+.PHONY: sim-backend
+
+sim-full: ## Run full system simulation (cocotb; run: pip install cocotb)
+	$(call SIM_BANNER,sim-full  --  full system simulation)
+	$(MAKE) -C $(VERIFICATION_DIR)/full_system_tests
+.PHONY: sim-full
+
+sim-mem2vga: ## Run mem2vga simulation (cocotb; also needs: git submodule update --init libs/gf180mcu_ocd_ip_sram)
+	$(call SIM_BANNER,sim-mem2vga  --  mem2vga simulation)
+	$(MAKE) -C $(VERIFICATION_DIR)/output_tests/mem2vga_tests
+.PHONY: sim-mem2vga
+
+sim-hmem: ## Run memory-interface simulation (cocotb; run: pip install cocotb)
+	$(call SIM_BANNER,sim-hmem  --  memory interface simulation)
+	$(MAKE) -C $(VERIFICATION_DIR)/output_tests/memory_interface_tests
+.PHONY: sim-hmem
+
+sim-all: sim-pwm sim-scanner sim-scanner2mem ## Run all iverilog simulations (cocotb sims need: pip install cocotb)
+	@echo ""
+	@echo "================================================================"
+	@echo "  ALL SIMULATIONS COMPLETE"
+	@echo "================================================================"
+.PHONY: sim-all
+
+clean-test-images: ## Delete the generated test_images directory
+	rm -rf $(VERIFICATION_DIR)/test_images
+.PHONY: clean-test-images
 
 sim-view: ## View simulation waveforms in GTKWave
 	gtkwave cocotb/sim_build/chip_top.fst

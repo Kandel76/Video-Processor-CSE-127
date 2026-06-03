@@ -17,9 +17,10 @@ module tb_pwm;
   pwm #(.N(N))
       dut(.clk(clk),
           .rst_n(rst_n),
-          .duty_threshold(duty_threshold),
+          .duty_cycle(duty_threshold),
           .period(period),
-          .pwm_out(pwm_out));
+          .pwm_out(pwm_out),
+          .period_start_out());
 
   //  every 20ns -- 25MHz
   initial

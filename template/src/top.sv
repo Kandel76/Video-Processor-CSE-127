@@ -12,14 +12,14 @@ module top #(
     input  logic                              pwm_clk,   //100MHz clk for PWM generator)
 
     input  logic                              rst_n, //active low
+    //needed for GL simulation -- move internally for Synthesis
+    input  logic [COLS:0]                     cmp_o,  // comparator outputs feeding the SAR ADCs
 
     // VGA outputs
     output logic                              hsync_o,
     output logic                              vsync_o,
     output logic [11:0]                       pixel_o,
-    
-    //needed for GL simulation -- move internally for Synthesis
-    logic [COLS:0] cmp_o; // comparator outputs feeding the SAR ADCs
+
 
     // Off-chip SRAM interface (Hitachi memory)
     output logic [14:0]                       mem_addr_o,
@@ -48,7 +48,7 @@ module top #(
     logic                   comp_done;
 
     logic [ADC_DATA_W-1:0]  adc_data;
-    logic [COLS:0]          comp_done_per, adc_done_per;
+    logic [COLS:0]          comp_done_per;
 
     logic [ROWS-1:0]        row_enable, row_reset_scan;
     logic [ROW_DATA_BUS_W-1:0] row_data;
@@ -175,7 +175,7 @@ module top #(
                 .adc_reset    (reset_adc),
                 .valid_voltage(valid_voltage),
                 .adc_o        (adc_data[DATA_BITS*(gi+1)-1 : DATA_BITS*gi]),
-                .adc_done     (adc_done_per[gi]),
+                .adc_done     (), //not used timing controlled w adc_read_en
                 .adc_ready    (), //not used since we control the timing with adc_read_en
                 .comp_done    (comp_done_per[gi])
             );

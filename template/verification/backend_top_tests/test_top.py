@@ -137,9 +137,9 @@ async def frame_done_test(dut):
       dut.cmp_o.value = 0
 
     await RisingEdge(dut.clk)
-    if(cycle % 100 == 0): #print every 100 cycles for visibility
-      print(f"Cycle {cycle}: row={row}, threshold={threshold}, cmp_o={dut.cmp_o.value}, frame_done={dut.frame_done.value}")
-
+    # if(cycle % 100 == 0): #print every 100 cycles for visibility
+      # print(f"Cycle {cycle}: row={row}, threshold={threshold}, cmp_o={dut.cmp_o.value}, frame_done={dut.frame_done.value}")
+      
     #check if frame completes
     if ((dut.frame_done.value) == 1) & (np.array_equal(actual_mem, expected_mem) ):
         dut._log.info(f"frame_done reached at cycle {cycle}; Memory contents match expected values")
