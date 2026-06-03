@@ -85,9 +85,12 @@ GL_DIR := $(VERIFICATION_DIR)/full_system_tests/gl
 
 SIM_BANNER = @echo "" && echo "================================================================" && echo "  RUNNING: $(1)" && echo "================================================================"
 
+SRAM256_DIR := $(MAKEFILE_DIR)/libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1
+
 synth-gl: ## Synthesize full_system.sv to a gate-level netlist for GL simulation
 	mkdir -p $(GL_DIR)
 	yosys -p " \
+		read_verilog -lib $(SRAM256_DIR)/gf180mcu_ocd_ip_sram__sram256x8m8wm1__blackbox.v; \
 		read_verilog -sv \
 			$(VERIFICATION_DIR)/full_system_tests/full_system.sv \
 			$(SRC_DIR)/ADC/ramp_controller.sv \

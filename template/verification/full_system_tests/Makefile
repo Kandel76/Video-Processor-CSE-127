@@ -16,6 +16,8 @@ STD_CELL_LIB ?= $(PWD)/../../gf180mcu/gf180mcuD/libs.ref/gf180mcu_as_sc_mcu7t3v3
 
 VERILOG_SOURCES += $(GL_NETLIST)
 VERILOG_SOURCES += $(STD_CELL_LIB)
+# SRAM behavioral model — double_buffer.v instantiates two of these as line buffers
+VERILOG_SOURCES += $(PWD)/../../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram__sram256x8m8wm1.v
 
 # FUNCTIONAL skips timing checks in cell models; UNIT_DELAY adds 1-step gate delay
 COMPILE_ARGS += -DFUNCTIONAL -DUNIT_DELAY=#1
