@@ -75,6 +75,9 @@
 
                 # For logo generation
                 pillow
+
+                # For test_full_system.py
+                numpy
               ];
           });
         }
