@@ -5,7 +5,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, ClockCycles, First, Timer
 
 CLK_PERIOD_NS = 40  # 25 MHz
-test_image = "demo_input.npy"
+test_image = "img_30x30_gradient.npy"
 
 # Simulated off-chip Hitachi SRAM (address -> byte).
 # Shared between coroutines; clear at the start of each test.
@@ -144,9 +144,10 @@ async def full_system_test(dut):
     while the main coroutine waits for frame_done then immediately captures
     the VGA output to vga_out_full_system.bmp.
     """
-    # Parameters are elaborated away in GL netlists — hardcode to match full_system.sv defaults
-    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 240
-    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 320
+    # cmp_o is [COLS:0] in RTL, so its width always equals COLS+1 regardless of
+    # whether the parameter survives elaboration into the simulation.
+    COLS = len(dut.cmp_o) - 1
+    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else COLS
     dut._log.info(f"Frame size from DUT: {ROWS} rows x {COLS} cols")
 
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
@@ -214,9 +215,8 @@ async def full_sys_sram_check_test(dut):
     """
     verify that the expected image data is written into SRAM
     """
-    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 240
-    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 320
-
+    COLS = len(dut.cmp_o) - 1
+    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else COLS
     dut._log.info(f"SRAM check: {ROWS} rows x {COLS} cols")
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
     await reset_dut(dut)

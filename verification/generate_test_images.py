@@ -41,9 +41,15 @@ img1_checkerboard = np.array([
 ], dtype=np.uint8)
 np.save(os.path.join(out_dir, "img1_checkerboard.npy"), img1_checkerboard)
 
-print("Test images (4x4) written to:", out_dir)
+# 30x30 diagonal gradient: pixel = (row + col) * 15 // 58, covers full 0-15 range
+_r, _c = np.mgrid[0:30, 0:30]
+img_30x30_gradient = ((_r + _c) * 15 // 58).astype(np.uint8)
+np.save(os.path.join(out_dir, "img_30x30_gradient.npy"), img_30x30_gradient)
+
+print("Test images written to:", out_dir)
 for name, arr in [("img2_gradient", img2_gradient),
                   ("img3_center_square", img3_center_square),
                   ("img_all_ones", img_all_ones),
-                  ("img1_checkerboard", img1_checkerboard)]:
-    print(f"  {name}:\n{arr}")
+                  ("img1_checkerboard", img1_checkerboard),
+                  ("img_30x30_gradient", img_30x30_gradient)]:
+    print(f"  {name} {arr.shape}:\n{arr}")
