@@ -35,4 +35,4 @@ These directories contain several files which are necessary for librelane, the p
 
 # Architecture
 
-![alt text](https://github.com/Kandel76/Video-Processor-CSE-127/docs/block_diagram.png "Block diagram")
+![alt text](https://github.com/Kandel76/Video-Processor-CSE-127/raw/main/docs/block_diagram.png "Block diagram")
