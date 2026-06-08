@@ -32,3 +32,7 @@ The libs directory contains submodules for the pre-hardened components used by t
 
 ## ip, scripts, librelane
 These directories contain several files which are necessary for librelane, the process we use to generate the chip layout.
+
+# Architecture
+
+![alt text](https://github.com/Kandel76/Video-Processor-CSE-127/docs/block_diagram.png "Block diagram")
