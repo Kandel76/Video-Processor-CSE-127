@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
 module top #(
-    parameter int ROWS               = 4,
-    parameter int COLS               = 4,  //dimensions of diode array (321, including dark reference column (includeing zero))
+    parameter int ROWS               = 240,
+    parameter int COLS               = 320,  //dimensions of diode array (321, including dark reference column (includeing zero))
     parameter int DATA_BITS          = 4,
     parameter int RESET_CYCLES       = 10, //keep these low for faster sim --- CHANGE FOR CHIP CORE -----
     parameter int INTEGRATION_CYCLES = 10,

@@ -86,6 +86,7 @@ GL_DIR := $(VERIFICATION_DIR)/full_system_tests/gl
 SIM_BANNER = @echo "" && echo "================================================================" && echo "  RUNNING: $(1)" && echo "================================================================"
 
 SRAM256_DIR := $(MAKEFILE_DIR)/libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1
+SCL_LIB     := $(MAKEFILE_DIR)/libs/gf180mcu_as_sc_mcu7t3v3/pdk/libs.ref/gf180mcu_as_sc_mcu7t3v3/lib/gf180mcu_as_sc_mcu7t3v3__tt_025C_3v30.lib
 
 synth-gl: ## Synthesize full_system.sv to a gate-level netlist for GL simulation
 	mkdir -p $(GL_DIR)
@@ -103,6 +104,8 @@ synth-gl: ## Synthesize full_system.sv to a gate-level netlist for GL simulation
 			$(SRC_DIR)/output/double_buffer.v \
 			$(SRC_DIR)/output/hmem_access.v; \
 		synth -top top -flatten; \
+		dfflibmap -liberty $(SCL_LIB); \
+		abc -liberty $(SCL_LIB); \
 		write_verilog -noattr $(GL_DIR)/top_gl.v"
 	@echo "GL netlist written to $(GL_DIR)/top_gl.v"
 .PHONY: synth-gl

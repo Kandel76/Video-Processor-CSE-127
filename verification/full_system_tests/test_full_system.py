@@ -5,7 +5,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, ClockCycles, First, Timer
 
 CLK_PERIOD_NS = 40  # 25 MHz
-test_image = "img2_gradient.npy"
+test_image = "demo_input.npy"
 
 # Simulated off-chip Hitachi SRAM (address -> byte).
 # Shared between coroutines; clear at the start of each test.
@@ -96,7 +96,8 @@ async def drive_sensor(dut, image, ROWS, COLS):
         row = int(dut.current_row.value)
         # print(f"Sensor: row={row}, threshold={threshold}")
         if row < ROWS:
-            dut.cmp_o.value = get_cmp_o(image[row, :COLS], threshold, COLS + 1)
+            row_pixels = image[row, :COLS] if row < image.shape[0] else []
+            dut.cmp_o.value = get_cmp_o(row_pixels, threshold, COLS + 1)
         else:
             dut.cmp_o.value = 0
         await RisingEdge(dut.clk)
@@ -109,7 +110,11 @@ async def drive_sensor(dut, image, ROWS, COLS):
 # ── Build expected values from the input image ────────────────────>
 
 def expected_flat_image(image, ROWS, COLS):
-    return image[:ROWS, :COLS].astype(np.uint8).flatten()
+    canvas = np.zeros((ROWS, COLS), dtype=np.uint8)
+    r = min(image.shape[0], ROWS)
+    c = min(image.shape[1], COLS)
+    canvas[:r, :c] = image[:r, :c]
+    return canvas.flatten()
 
 # ── Read pixel values back from the simulated SRAM ────────────────────>
 def read_sram_frame(ROWS, COLS):
@@ -140,8 +145,8 @@ async def full_system_test(dut):
     the VGA output to vga_out_full_system.bmp.
     """
     # Parameters are elaborated away in GL netlists — hardcode to match full_system.sv defaults
-    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 4
-    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 4
+    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 240
+    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 320
     dut._log.info(f"Frame size from DUT: {ROWS} rows x {COLS} cols")
 
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
@@ -160,29 +165,45 @@ async def full_system_test(dut):
     await RisingEdge(dut.frame_done)
     dut._log.info("frame_done received — capturing next VGA frame")
 
-    # BMP header: 640x480, 24-bit colour
+    # Stop the scanner from restarting (frame_start=1 would trigger a new scan
+    # the moment the scanner returns to IDLE, competing for SRAM during capture)
+    dut.frame_start.value = 0
+
+    # Let any in-flight hmem_access writes drain (pipeline is ~6 cycles deep)
+    await ClockCycles(dut.clk, 20)
+
+    # BMP header: 640x480, 24-bit colour, top-down (negative height = 0xFFFFFE20)
+    # Top-down means first bytes in the file = top row of displayed image, which
+    # matches our capture order (VGA line 0 first). Positive height = bottom-up,
+    # which would flip the image.
+    # File size = 54 (header) + 640*480*3 (pixels) = 921654 = 0x000E1036
     bmp_header = (
-        bytearray([0x42, 0x4D, 0x36, 0x6C, 0x00, 0x00, 0x00, 0x00]) +
+        bytearray([0x42, 0x4D, 0x36, 0x10, 0x0E, 0x00, 0x00, 0x00]) +
         bytearray([0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00]) +
-        bytearray([0x00, 0x00, 0x80, 0x02, 0x00, 0x00, 0xE0, 0x01]) +
-        bytearray([0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00]) +
+        bytearray([0x00, 0x00, 0x80, 0x02, 0x00, 0x00, 0x20, 0xFE]) +  # height = -480
+        bytearray([0xFF, 0xFF, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00]) +
         bytearray([0x00, 0x00, 0x00, 0x6C, 0x09, 0x00, 0x13, 0x0B]) +
         bytearray([0x00, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x00, 0x00]) +
         bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     )
 
+    # Sync to a frame boundary so the 480 captured lines form one complete frame.
+    # Without this, capture starts mid-frame: big_pix_addr resets at the vsync
+    # boundary mid-capture, causing the image to split/jump in the middle of the BMP.
+    await RisingEdge(dut.vsync_o)
+    await FallingEdge(dut.vsync_o)
+
     with open("vga_out_full_system.bmp", "wb") as f:
         f.write(bmp_header)
 
-
-        # BMP stores rows bottom-to-top; VGA scans top-to-bottom.
-        # Iterating from 479→0 while awaiting each active_o rising edge
-        # maps VGA line 0 → BMP row 479 (bottom) and VGA line 479 → BMP row 0 (top).
-        for _ in range(479, -1, -1):
+        for _ in range(480):
             await RisingEdge(dut.active_o)
-            for _ in range(639, -1, -1):
+            # pixel_o is 1 clock behind active_o (pixel_r is registered from pixel_n
+            # which uses active_o; at the posedge where active_o rises, pixel_r still
+            # holds the pre-rise value = 0). Advance one clock so pixel_o is valid.
+            await RisingEdge(dut.clk)
+            for _ in range(640):
                 await FallingEdge(dut.clk)
-                await Timer(1, unit="ps")
                 byte = int(dut.pixel_o.value) & 0xF0
                 f.write(bytearray([byte, byte, byte]))
 
@@ -193,8 +214,8 @@ async def full_sys_sram_check_test(dut):
     """
     verify that the expected image data is written into SRAM
     """
-    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 4
-    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 4
+    ROWS = int(dut.ROWS.value) if hasattr(dut, 'ROWS') else 240
+    COLS = int(dut.COLS.value) if hasattr(dut, 'COLS') else 320
 
     dut._log.info(f"SRAM check: {ROWS} rows x {COLS} cols")
     cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS, unit="ns").start())
