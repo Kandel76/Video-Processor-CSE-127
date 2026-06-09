@@ -213,7 +213,7 @@ MACROS:
     gds:
       - dir::../ip/photodiode/build/oas/photodiode_layout.oas
     lef:
-      - dir::../ip/photodiode/build/lef/PIXEL_ARRAY.lef
+      - dir::../ip/photodiode/build/lef/photodiode_layout.lef
     vh:
       - dir::../ip/photodiode/macro/photodiode_layout.v
     spice:
