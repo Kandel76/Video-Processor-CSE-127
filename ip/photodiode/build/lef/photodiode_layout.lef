@@ -9377,4 +9377,4 @@ MACRO photodiode_layout
     END
   END COLUMN_OUTPUT[320]
 
-END PIXEL_ARRAY
+END photodiode_layout
