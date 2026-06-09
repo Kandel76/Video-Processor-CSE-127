@@ -11,11 +11,10 @@ Use of this repository requires `CMake`, as well as `cocotb`, `iverilog`, and `p
 The root of this repository contains a Makefile which can be used to execute the librelane synthesis flow on our design to create a complete chip layout. 
 The Makefile also contains targets for both logical and gate-level synthesis.
 
-To build the project locally, you should first run `make clone-pdk` and `make install-3v3-scl` to install the necessary libraries for the build. 
-Then, you can run `make librelane` to create a Run directory. 
+To build the project locally, you need to open a `nix-shell` using the flake provided in this directory. 
+Then, you should run `make clone-pdk` and `make install-3v3-scl` to install the necessary libraries for the build. 
+Then, you can run `make librelane` to create a Run directory and start the layout process.
 This process can take multiple hours, and requires at least 16 GB of local RAM.
-
-A basic version of the local run can be performed through Github actions.
 
 # File Structure
 

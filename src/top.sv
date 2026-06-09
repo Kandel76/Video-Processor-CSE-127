@@ -13,7 +13,9 @@ module top #(
 
     input  logic                              rst_n, //active low
     //needed for GL simulation -- move internally for Synthesis
+    `ifdef SIMULATION
     input  logic [COLS:0]                     cmp_o,  // comparator outputs feeding the SAR ADCs
+    `endif
 
     // VGA outputs
     output logic                              hsync_o,
@@ -31,9 +33,14 @@ module top #(
     input  logic [7:0]                        mem_data_i,
 
     //RC FILTER OUTPUT
+    input  logic                              rc_filter_in,
     output logic                              pwm_out
 
 );
+    `ifndef SIMULATION
+    wire [COLS:0] cmp_o
+    `endif
+
 
     localparam ADC_DATA_W    = DATA_BITS * (COLS + 1); //+1 for dark reference column
     localparam ROW_DATA_BUS_W = DATA_BITS * COLS; //not including dark col
@@ -71,6 +78,8 @@ module top #(
     logic                        frame_start;
     
     assign frame_start = 1'b1; // continuous capture — restarts immediately after each frame
+
+    wire [COLS:1] column_out;
 
 
     assign comp_done = &comp_done_per[COLS:1];  // comp done when all columns (except dark ref) are done
@@ -179,7 +188,21 @@ module top #(
                 .adc_ready    (), //not used since we control the timing with adc_read_en
                 .comp_done    (comp_done_per[gi])
             );
+
+            comparator #() u_comparator (
+                .clk_i(clk),
+                .v_inp(column_out[gi]),
+                .v_inm(rc_filter_in),
+                .q_o(cmp_o[gi])
+                // .q_invo() //unused
+            );
         end
     endgenerate
+
+    photodiode_layout photodiode_array (
+        .RESET(row_reset_scan),
+        .ROW_SELECT(row_enable),
+        .COLUMN_OUT(column_out)
+    );
 
 endmodule

@@ -1,3 +1,4 @@
+(* blackbox *)
 module photodiode_layout (
 	input wire [239:0] ROW_SELECT,
 	input wire [239:0] RESET,

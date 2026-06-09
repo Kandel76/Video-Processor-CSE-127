@@ -80,6 +80,7 @@ module chip_core #(
     wire [7:0]  mem_data_out_w;
     wire [7:0]  mem_data_in_w;
     wire        pwm_out_w;
+    wire        rc_filter_in;
 
     // mem_data bus is driven out only when the write-enable is asserted
     wire mem_wr_active = ~mem_nWE_w;
@@ -102,6 +103,8 @@ module chip_core #(
         if (NUM_BIDIR_PADS > 42)
             assign bidir_out[NUM_BIDIR_PADS-1:42] = '0;
     endgenerate
+
+    assign rc_filter_in = analog[0];
 
     // -----------------------------------------------------------------------
     // Output enables  (1 = drive, 0 = high-Z / input)
@@ -142,7 +145,9 @@ module chip_core #(
         .clk          (clk),
         .pwm_clk      (pwm_clk),
         .rst_n        (rst_n),
+        `ifdef SIMULATION
         .cmp_o        ('0),
+        `endif
 
         .hsync_o      (hsync_w),
         .vsync_o      (vsync_w),
@@ -156,6 +161,7 @@ module chip_core #(
         .mem_data_o   (mem_data_out_w),
         .mem_data_i   (mem_data_in_w),
 
+        .rc_filter_in (rc_filter_in)
         .pwm_out      (pwm_out_w)
     );
 

@@ -207,6 +207,26 @@ MACROS:
         location: [1700, 700]
         orientation: N
 
+  # Diode array
+  gf180mcu_ocd_ip_sram__sram256x8m8wm1:
+    gds:
+      - dir::../ip/photodiode/build/oas/photodiode_layout.oas
+    lef:
+      - dir::../ip/photodiode/build/lef/PIXEL_ARRAY.lef
+    vh:
+      - dir::../ip/photodiode/macro/photodiode_layout.v
+    spice:
+      - dir::../ip/photodiode/macro/photodiode_layout.spice
+    # lib:
+    #   "*_tt_025C_3v30":
+    #     - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib
+    #   "*_ff_n40C_3v60":
+    #     - dir::../libs/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ff_n40C_3v60.lib
+    instances:
+      i_chip_core.u_top.photodiode_array:
+        location: [3343, 4680]
+        orientation: N
+
 # Halo size around macros while cutting rows.
 # Workaround for: https://github.com/The-OpenROAD-Project/OpenROAD/issues/8868
 FP_MACRO_HORIZONTAL_HALO: 10
