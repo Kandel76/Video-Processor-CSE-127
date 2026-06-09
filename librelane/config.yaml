@@ -38,6 +38,7 @@ VERILOG_FILES:
 - dir::../src/output/sync_manager.v
 - dir::../src/output/double_buffer.v
 - dir::../src/output/hmem_access.v
+- dir::../src/ADC/comparator/comparator.sv
 
 # Enable plugin for better SystemVerilog support
 # USE_SLANG: True
@@ -208,7 +209,7 @@ MACROS:
         orientation: N
 
   # Diode array
-  gf180mcu_ocd_ip_sram__sram256x8m8wm1:
+  photodiode_layout:
     gds:
       - dir::../ip/photodiode/build/oas/photodiode_layout.oas
     lef:

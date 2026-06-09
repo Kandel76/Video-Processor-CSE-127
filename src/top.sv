@@ -38,7 +38,7 @@ module top #(
 
 );
     `ifndef SIMULATION
-    wire [COLS:0] cmp_o
+    wire [COLS:0] cmp_o;
     `endif
 
 

@@ -161,7 +161,7 @@ module chip_core #(
         .mem_data_o   (mem_data_out_w),
         .mem_data_i   (mem_data_in_w),
 
-        .rc_filter_in (rc_filter_in)
+        .rc_filter_in (rc_filter_in),
         .pwm_out      (pwm_out_w)
     );
 
