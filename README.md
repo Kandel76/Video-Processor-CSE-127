@@ -109,3 +109,6 @@ Every 6 clock cycles, one 8-bit packet of pixel data is read from the off-chip m
 The on-chip SRAM will store one 320-pixel row of data.
 Because each of our photodiode pixels is actually 2 VGA pixels "tall", the on-chip buffer is then read twice to VGA output, the other buffer is written to with the following row of pixel data.
 This double-buffering allows us to comfortably reach the necessary output speed even with the slow memory read/write time.
+
+# Limitations and Future Steps
+Currently, our chip only works in simulation, and we have not been able to run synthesis on the full system.
