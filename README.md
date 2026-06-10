@@ -39,9 +39,11 @@ To run gate-level simulation on our project, follow these steps:
     4. Build the gate-level netlist (uses yosys):
         make synth-gl
     
-    5. Run the gate-level simulation (Final Step);
+    5. Run the gate-level simulation (Final Step):
         make sim-gl
-
+    
+    6. NOTE: 
+        Running 'make install-3v3-svl' or 'make clone-pdk' are not necessary for the above steps however we recommend these commands if you wish to see the librelane flow for yourself
 ### libs
 The libs directory contains submodules for the pre-hardened components used by this design. Notably, this design is intended for 3.3V power, hence the 3v3 libraries. 
 
