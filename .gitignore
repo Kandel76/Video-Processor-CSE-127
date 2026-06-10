@@ -12,3 +12,6 @@ vga_out_2.bmp
 *.out
 *.npy
 verification/full_system_tests/gl/
+*.log
+librelane/runs/
+gf180mcu/
