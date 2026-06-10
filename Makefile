@@ -193,6 +193,7 @@ GF_DIR := $(OAS_DIR)/gf180mcu
 VENV := $(MAKEFILE_DIR)/.venv
 GFENV := $(GF_DIR)/.venv
 PHOTO_DIR := $(MAKEFILE_DIR)/ip/photodiode
+MACRO_DIR := $(PHOTO_DIR)/macro
 
 setup: ## Install uv venv and gdsfactory for photodiode layout
 	curl -LsSf https://astral.sh/uv/install.sh | sh || true
@@ -230,11 +231,8 @@ oas: setup gf180 ## Generate the photodiode OAS/GDS files
 
 lef: ## Generate the photodiode LEF file
 	source $(VENV)/bin/activate
-	cd $(PHOTO_DIR)
-	python3 photodiode_lef_generator.py
-	cd build
-	mkdir lef
-	cd ..
-	mv PIXEL_ARRAY.lef build/lef/
+	cd $(MACRO_DIR)
+	python3 photodiode_layout.py
+	cp photodiode_layout.lef $(PHOTO_DIR)/build/lef
 
 .PHONY: lef
