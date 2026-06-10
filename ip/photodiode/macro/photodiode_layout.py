@@ -76,7 +76,7 @@ def write_row_select_pins(f):
         f.write("    DIRECTION INPUT ;\n")
         f.write("    USE SIGNAL ;\n")
         f.write("    PORT\n")
-        f.write("      LAYER metal1 ;\n")
+        f.write("      LAYER Metal1 ;\n")
         f.write(
             f"        RECT {tx(ROW_SELECT_X1):.3f} {ty(y1):.3f} "
             f"{tx(ROW_SELECT_X2):.3f} {ty(y2):.3f} ;\n"
@@ -96,7 +96,7 @@ def write_reset_pins(f):
         f.write("    DIRECTION INPUT ;\n")
         f.write("    USE SIGNAL ;\n")
         f.write("    PORT\n")
-        f.write("      LAYER metal1 ;\n")
+        f.write("      LAYER Metal1 ;\n")
         f.write(
             f"        RECT {tx(RESET_X1):.3f} {ty(y1):.3f} "
             f"{tx(RESET_X2):.3f} {ty(y2):.3f} ;\n"
@@ -116,7 +116,7 @@ def write_column_out_pins(f):
         f.write("    DIRECTION OUTPUT ;\n")
         f.write("    USE SIGNAL ;\n")
         f.write("    PORT\n")
-        f.write("      LAYER metal2 ;\n")
+        f.write("      LAYER Metal2 ;\n")
         f.write(
             f"        RECT {tx(x1):.3f} {ty(COLUMN_Y1):.3f} "
             f"{tx(x2):.3f} {ty(COLUMN_Y2):.3f} ;\n"
@@ -138,7 +138,7 @@ def write_vdd_pin(f):
         y2 = base_y + VDD_M1_Y2
 
         f.write("    PORT\n")
-        f.write("      LAYER metal1 ;\n")
+        f.write("      LAYER Metal1 ;\n")
         f.write(
             f"        RECT {tx(VDD_M1_X1):.3f} {ty(y1):.3f} "
             f"{tx(VDD_M1_X2):.3f} {ty(y2):.3f} ;\n"
@@ -153,7 +153,7 @@ def write_vdd_pin(f):
         x2 = base_x + VDD_M2_X2
 
         f.write("    PORT\n")
-        f.write("      LAYER metal2 ;\n")
+        f.write("      LAYER Metal2 ;\n")
         f.write(
             f"        RECT {tx(x1):.3f} {ty(VDD_M2_Y1):.3f} "
             f"{tx(x2):.3f} {ty(VDD_M2_Y2):.3f} ;\n"
@@ -175,7 +175,7 @@ def write_gnd_pin(f):
         y2 = base_y + GND_Y2
 
         f.write("    PORT\n")
-        f.write("      LAYER metal3 ;\n")
+        f.write("      LAYER Metal3 ;\n")
         f.write(
             f"        RECT {tx(GND_X1):.3f} {ty(y1):.3f} "
             f"{tx(GND_X2):.3f} {ty(y2):.3f} ;\n"
@@ -188,11 +188,11 @@ def write_gnd_pin(f):
 def write_obs(f):
     f.write("  OBS\n")
 
-    for layer in ["metal1", "metal2", "metal3", "metal4", "metal5"]:
+    for layer in ["Metal1", "Metal2", "Metal3", "Metal4", "Metal5"]:
         f.write(f"    LAYER {layer} ;\n")
         f.write(
-            f"      RECT -0.25 -2.425 "
-            f"{tx(WIDTH):.3f} {ty(HEIGHT):.3f} ;\n"
+            f"      RECT 0.03 -2.145 "
+            f"{tx(WIDTH-0.28):.3f} {ty(HEIGHT-0.28):.3f} ;\n"
         )
 
     f.write("  END\n\n")
