@@ -1,5 +1,3 @@
-**TODO:** Makefile creation
-
 To run a simulation, just run "ngspice light\_pixel\_sim.sp" and it'll automatically bring up a graph.
 
 All current .sp files simulate a single pixel resetting and integrating 16 times over the course of ~2500 cycles. This is a ~2500 cycles out of ~3500 cycles avaliable per frame, as ~1000 cycles are required to slowly output bits to memory.
