@@ -113,7 +113,12 @@ synth-gl: ## Synthesize full_system.sv to a gate-level netlist for GL simulation
 	@echo "GL netlist written to $(GL_DIR)/top_gl.v"
 .PHONY: synth-gl
 
-sim-gl: ## Run GL simulation (run synth-gl first to produce the netlist)
+sim-deps: ## Install Python dependencies for the cocotb sims (numpy, cocotb)
+	$(call SIM_BANNER,sim-deps  --  installing python sim dependencies)
+	python3 -m pip install numpy cocotb
+.PHONY: sim-deps
+
+sim-gl: test-images ## Run GL simulation (run synth-gl first to produce the netlist)
 	$(call SIM_BANNER,sim-gl  --  gate-level full system simulation)
 	$(MAKE) -C $(VERIFICATION_DIR)/full_system_tests GL_SIM=1
 .PHONY: sim-gl
@@ -136,12 +141,12 @@ sim-scanner2mem: ## Run scanner-to-memory unit test (iverilog)
 	$(MAKE) -C $(VERIFICATION_DIR)/output_tests/scanner2mem_tests
 .PHONY: sim-scanner2mem
 
-sim-backend: ## Run backend top simulation (cocotb; run: pip install cocotb)
+sim-backend: test-images ## Run backend top simulation (cocotb; run: pip install cocotb)
 	$(call SIM_BANNER,sim-backend  --  backend top simulation)
 	$(MAKE) -C $(VERIFICATION_DIR)/backend_top_tests sim_top
 .PHONY: sim-backend
 
-sim-full: ## Run full system simulation (cocotb; run: pip install cocotb)
+sim-full: test-images ## Run full system simulation (cocotb; run: pip install cocotb)
 	$(call SIM_BANNER,sim-full  --  full system simulation)
 	$(MAKE) -C $(VERIFICATION_DIR)/full_system_tests
 .PHONY: sim-full
@@ -162,6 +167,11 @@ sim-all: sim-pwm sim-scanner sim-scanner2mem ## Run all iverilog simulations (co
 	@echo "  ALL SIMULATIONS COMPLETE"
 	@echo "================================================================"
 .PHONY: sim-all
+
+test-images: ## Generate the .npy test images used by the cocotb sims
+	$(call SIM_BANNER,test-images  --  generate cocotb test images)
+	python3 $(VERIFICATION_DIR)/generate_test_images.py
+.PHONY: test-images
 
 clean-test-images: ## Delete the generated test_images directory
 	rm -rf $(VERIFICATION_DIR)/test_images
