@@ -25,6 +25,23 @@ The src directory contains all of the necessary Verilog and SystemVerilog files 
 The verification directory contains all of the testbenches which are needed for both the unit tests and system tests for this repository. 
 We used a mix of cocotb (python) and spice simulation to test the mixed analog and digital components of our system.
 
+To run gate-level simulation on our project, follow these steps:
+    
+    1. Download the necessary standard-cell + SRAM submodules:
+        git submodule update --init libs/gf180mcu_as_sc_mcu7t3v3 libs/gf180mcu_ocd_ip_sram
+    
+    2. Install system tools:
+        sudo dnf install yosys iverilog (or apt-get on Debian/Ubuntu)
+    
+    3. Install python dependencies: 
+        make sim-deps
+    
+    4. Build the gate-level netlist (uses yosys):
+        make synth-gl
+    
+    5. Run the gate-level simulation (Final Step);
+        make sim-gl
+
 ### libs
 The libs directory contains submodules for the pre-hardened components used by this design. Notably, this design is intended for 3.3V power, hence the 3v3 libraries. 
 
