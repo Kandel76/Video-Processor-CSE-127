@@ -10430,15 +10430,15 @@ MACRO photodiode_layout
 
   OBS
     LAYER Metal1 ;
-      RECT 0.03 -2.145 2754.150 2061.345 ;
+      RECT 5 5 2749.430 2056.625 ;
     LAYER Metal2 ;
-      RECT 0.03 -2.145 2754.150 2061.345 ;
+      RECT 5 5 2749.430 2056.625 ;
     LAYER Metal3 ;
-      RECT 0.03 -2.145 2754.150 2061.345 ;
+      RECT 5 5 2749.430 2056.625 ;
     LAYER Metal4 ;
-      RECT 0.03 -2.145 2754.150 2061.345 ;
+      RECT 5 5 2749.430 2056.625 ;
     LAYER Metal5 ;
-      RECT 0.03 -2.145 2754.150 2061.345 ;
+      RECT 5 5 2749.430 2056.625 ;
   END
 
 END photodiode_layout

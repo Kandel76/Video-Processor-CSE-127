@@ -191,8 +191,8 @@ def write_obs(f):
     for layer in ["Metal1", "Metal2", "Metal3", "Metal4", "Metal5"]:
         f.write(f"    LAYER {layer} ;\n")
         f.write(
-            f"      RECT 0.03 -2.145 "
-            f"{tx(WIDTH-0.28):.3f} {ty(HEIGHT-0.28):.3f} ;\n"
+            f"      RECT 5 5 "
+            f"{tx(WIDTH-5):.3f} {ty(HEIGHT-5):.3f} ;\n"
         )
 
     f.write("  END\n\n")
